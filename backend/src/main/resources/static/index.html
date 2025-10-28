@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciador de Frotas</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header>
+    <h1>Gestão de Veículos</h1>
+</header>
+
+<main>
+    <section id="form-section">
+        <h2>Cadastrar/Editar Veículo</h2>
+        <form id="veiculo-form">
+            <input type="hidden" id="veiculo-id">
+            <label for="tipoVeiculo">Tipo de Veículo:</label>
+            <select id="tipoVeiculo" required>
+                <option value="">Selecione</option>
+                <option value="CARRO">Carro</option>
+                <option value="MOTO">Moto</option>
+            </select>
+            <br>
+
+            <label for="modelo">Modelo:</label>
+            <input type="text" id="modelo" required>
+            <br>
+
+            <label for="fabricante">Fabricante:</label>
+            <input type="text" id="fabricante" required>
+            <br>
+
+            <label for="ano">Ano:</label>
+            <input type="number" id="ano" min="1900" required>
+            <br>
+
+            <label for="preco">Preço:</label>
+            <input type="number" id="preco" min="0" step="0.01" required>
+            <br>
+
+            <div id="campos-carro" style="display:none;">
+                <label for="quantidadePortas">Portas:</label>
+                <input type="number" id="quantidadePortas" min="1">
+                <br>
+                <label for="tipoCombustivel">Combustível:</label>
+                <select id="tipoCombustivel">
+                    <option value="">Selecione</option>
+                    <option value="FLEX">FLEX</option>
+                    <option value="GASOLINA">GASOLINA</option>
+                    <option value="ETANOL">ETANOL</option>
+                    <option value="DIESEL">DIESEL</option>
+                </select>
+                <br>
+            </div>
+
+            <div id="campos-moto" style="display:none;">
+                <label for="cilindrada">Cilindrada:</label>
+                <input type="number" id="cilindrada" min="1">
+                <br>
+            </div>
+
+            <button type="submit" id="btn-salvar">Salvar Veículo</button>
+            <button type="button" id="btn-limpar">Limpar Formulário</button>
+        </form>
+        <p id="formMessageStatus" class="info"></p>
+    </section>
+
+    <section id="filter-section">
+        <h2>Filtros</h2>
+        <input type="text" id="filtro-modelo" placeholder="Filtrar por Modelo">
+        <input type="number" id="filtro-ano" placeholder="Filtrar por Ano">
+        <input type="text" id="filtro-fabricante" placeholder="Filtrar por Fabricante">
+        <input type="number" id="filtro-preco-min" placeholder="Preço Mínimo">
+        <input type="number" id="filtro-preco-max" placeholder="Preço Máximo">
+        <select id="filtro-tipo">
+            <option value="">Todos os Tipos</option>
+            <option value="CARRO">Carro</option>
+            <option value="MOTO">Moto</option>
+        </select>
+        <button id="btn-filtrar">Aplicar Filtros</button>
+        <button id="btn-limpar-filtros">Limpar Filtros</button>
+    </section>
+
+    <section id="list-section">
+        <h2>Veículos Cadastrados</h2>
+        <table id="veiculos-table">
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>Tipo</th>
+                <th>Modelo</th>
+                <th>Fabricante</th>
+                <th>Ano</th>
+                <th>Preço</th>
+                <th>Ações</th>
+            </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </section>
+
+    <div id="detalhes-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2>Detalhes do Veículo</h2>
+            <div id="detalhes-conteudo">
+            </div>
+        </div>
+    </div>
+</main>
+
+<script src="js/script.js"></script>
+</body>
+</html>
