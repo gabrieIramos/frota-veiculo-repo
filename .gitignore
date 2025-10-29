@@ -1,0 +1,95 @@
+# Sistema / SO
+.DS_Store
+Thumbs.db
+desktop.ini
+ehthumbs.db
+
+# Logs / temporários
+logs/
+*.log
+tmp/
+temp/
+*.tmp
+*.swp
+
+# IDEs
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+*.sublime-workspace
+*.sublime-project
+
+# Java / Spring Boot (Maven & Gradle)
+target/
+build/
+out/
+*.class
+*.jar
+*.war
+*.ear
+*.nar
+
+# Gradle
+.gradle/
+build/
+
+# Maven
+dependency-reduced-pom.xml
+release.properties
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+.buildNumber
+.mvn/timing.properties
+
+# Spring Boot Devtools
+spring-devtools.properties
+spring-boot-devtools-*.jar
+
+# Node / React
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+/build
+/dist
+/.cache
+/.parcel-cache
+/.next
+/out
+
+# Environment files (contém segredos)
+.env
+.env.*
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Test / Coverage
+coverage/
+coverage-final.json
+jest-cache/
+jest-local-cache/
+
+# Docker
+docker-compose.override.yml
+.env.docker
+
+# Arquivos binários / distribuições
+*.exe
+*.dll
+*.so
+*.dylib
+*.zip
+*.tar.gz
+*.rar
+
+# Outros
+.DS_Store
+Thumbs.db
+.idea/workspace.xml
