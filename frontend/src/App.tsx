@@ -79,7 +79,7 @@ export default function App() {
 
   const fetchVehicles = async () => {
     try {
-      const res = await fetch("http://localhost:8080/api/veiculos");
+      const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/veiculos`);
       if (!res.ok) throw new Error("Erro ao buscar veículos");
       const data = await res.json();
       setVehicles(data); // Atualiza o estado direto

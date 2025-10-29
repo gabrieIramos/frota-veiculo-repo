@@ -96,14 +96,14 @@ export function VehicleFormModal({
     if (editingVehicle && editingVehicle.id) {
       url =
         formData.tipoVeiculo === "CARRO"
-          ? `http://localhost:8080/api/veiculos/carros/${editingVehicle.id}`
-          : `http://localhost:8080/api/veiculos/motos/${editingVehicle.id}`;
+          ? `${process.env.REACT_APP_BACKEND_URL}/api/veiculos/carros/${editingVehicle.id}`
+          : `${process.env.REACT_APP_BACKEND_URL}/api/veiculos/motos/${editingVehicle.id}`;
       method = "PUT";
     } else {
       url =
         formData.tipoVeiculo === "CARRO"
-          ? "http://localhost:8080/api/veiculos/carros"
-          : "http://localhost:8080/api/veiculos/motos";
+          ? `${process.env.REACT_APP_BACKEND_URL}/api/veiculos/carros`
+          : `${process.env.REACT_APP_BACKEND_URL}/api/veiculos/motos`;
       method = "POST";
     }
 
