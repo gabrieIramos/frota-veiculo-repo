@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Car,
   LayoutDashboard,
@@ -51,69 +51,20 @@ import {
   AlertDialogTitle,
 } from "./components/ui/alert-dialog";
 
-// Mock data
-const initialVehicles: Vehicle[] = [
-  {
-    id: "1",
-    plate: "ABC-1234",
-    type: "Carro",
-    model: "Civic",
-    manufacturer: "Honda",
-    year: 2022,
-    price: 125000,
-    status: "Ativo",
-  },
-  {
-    id: "2",
-    plate: "XYZ-5678",
-    type: "Moto",
-    model: "CG 160",
-    manufacturer: "Honda",
-    year: 2023,
-    price: 15000,
-    status: "Ativo",
-  },
-  {
-    id: "3",
-    plate: "DEF-9012",
-    type: "Carro",
-    model: "Corolla",
-    manufacturer: "Toyota",
-    year: 2021,
-    price: 110000,
-    status: "Inativo",
-  },
-  {
-    id: "4",
-    plate: "GHI-3456",
-    type: "Moto",
-    model: "Ninja 400",
-    manufacturer: "Kawasaki",
-    year: 2024,
-    price: 35000,
-    status: "Ativo",
-  },
-];
-
 const menuItems = [
-  { icon: LayoutDashboard, label: "Dashboard", active: false, hasSubmenu: false },
-  { 
-    icon: Car, 
-    label: "Gestão de Frotas", 
-    active: true, 
+  {
+    icon: Car,
+    label: "Gestão de Frotas",
+    active: true,
     hasSubmenu: true,
     submenu: [
       { icon: List, label: "Veículos Cadastrados", active: true },
-      { icon: Plus, label: "Cadastrar Novo", active: false },
     ]
   },
-  { icon: Wrench, label: "Manutenção", active: false, hasSubmenu: false },
-  { icon: FileText, label: "Relatórios", active: false, hasSubmenu: false },
-  { icon: Settings, label: "Configurações", active: false, hasSubmenu: false },
 ];
 
 export default function App() {
-  const [vehicles, setVehicles] = useState<Vehicle[]>(initialVehicles);
+  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [filters, setFilters] = useState({
     type: "all",
@@ -125,6 +76,22 @@ export default function App() {
   const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [vehicleToDelete, setVehicleToDelete] = useState<string | null>(null);
+
+  const fetchVehicles = async () => {
+    try {
+      const res = await fetch("http://localhost:8080/api/veiculos");
+      if (!res.ok) throw new Error("Erro ao buscar veículos");
+      const data = await res.json();
+      setVehicles(data); // Atualiza o estado direto
+    } catch (err: any) {
+      console.error(err);
+      alert(err.message);
+    }
+  };
+
+  useEffect(() => {
+    fetchVehicles();
+  }, []);
 
   const handleAddVehicle = (
     vehicleData: Omit<Vehicle, "id"> & { id?: string }
@@ -155,12 +122,26 @@ export default function App() {
     setDeleteDialogOpen(true);
   };
 
-  const handleDeleteConfirm = () => {
-    if (vehicleToDelete) {
+  const handleDeleteConfirm = async () => {
+    if (!vehicleToDelete) return;
+
+    try {
+      const res = await fetch(`http://localhost:8080/api/veiculos/${vehicleToDelete}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) {
+        const error = await res.text();
+        throw new Error(error || "Erro ao deletar veículo");
+      }
       setVehicles(vehicles.filter((v) => v.id !== vehicleToDelete));
       setVehicleToDelete(null);
+      setDeleteDialogOpen(false);
+      alert("Veículo deletado com sucesso!");
+    } catch (err: any) {
+      console.error(err);
+      alert("Erro ao deletar veículo: " + err.message);
     }
-    setDeleteDialogOpen(false);
   };
 
   const handleClearFilters = () => {
@@ -174,24 +155,23 @@ export default function App() {
 
   const filteredVehicles = vehicles.filter((vehicle) => {
     const matchesSearch =
-      vehicle.plate.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      vehicle.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      vehicle.manufacturer.toLowerCase().includes(searchTerm.toLowerCase());
+      vehicle.modelo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      vehicle.fabricante.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesType =
-      filters.type === "all" || vehicle.type === filters.type;
+      filters.type === "all" || vehicle.tipoVeiculo === filters.type;
 
     const matchesManufacturer =
       !filters.manufacturer ||
-      vehicle.manufacturer
+      vehicle.fabricante
         .toLowerCase()
         .includes(filters.manufacturer.toLowerCase());
 
     const matchesYearFrom =
-      !filters.yearFrom || vehicle.year >= parseInt(filters.yearFrom);
+      !filters.yearFrom || vehicle.ano >= parseInt(filters.yearFrom);
 
     const matchesYearTo =
-      !filters.yearTo || vehicle.year <= parseInt(filters.yearTo);
+      !filters.yearTo || vehicle.ano <= parseInt(filters.yearTo);
 
     return (
       matchesSearch &&
@@ -283,8 +263,8 @@ export default function App() {
                   <p className="text-xs text-muted-foreground">admin@fleet.com</p>
                 </div>
               </div>
-              <Button 
-                variant="ghost" 
+              <Button
+                variant="ghost"
                 className="w-full justify-start gap-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
               >
                 <LogOut className="h-4 w-4" />
@@ -326,7 +306,7 @@ export default function App() {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
-                  placeholder="Buscar por placa, modelo ou fabricante..."
+                  placeholder="Buscar por modelo ou fabricante..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-9"
