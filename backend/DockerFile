@@ -1,0 +1,26 @@
+# Use JDK oficial como base
+FROM openjdk:17-jdk-alpine
+
+# Cria diretório de trabalho
+WORKDIR /app
+
+# Copia o Maven wrapper e o pom.xml
+COPY mvnw .
+COPY .mvn .mvn
+COPY pom.xml .
+
+# Baixa dependências do Maven
+RUN chmod +x mvnw
+RUN ./mvnw dependency:go-offline -B
+
+# Copia o código-fonte
+COPY src ./src
+
+# Build do JAR
+RUN ./mvnw clean package -DskipTests
+
+# Expõe a porta do Spring Boot
+EXPOSE 8080
+
+# Comando para rodar a aplicação
+CMD ["java", "-jar", "target/frota-veiculos-0.0.1-SNAPSHOT.jar"]
