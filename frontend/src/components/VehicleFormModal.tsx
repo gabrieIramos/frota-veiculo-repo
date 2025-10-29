@@ -43,6 +43,9 @@ export function VehicleFormModal({
     cilindrada: 150,
   });
 
+  const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+  console.log(BACKEND_URL);
+
   useEffect(() => {
     if (editingVehicle) {
       setFormData({
@@ -96,14 +99,14 @@ export function VehicleFormModal({
     if (editingVehicle && editingVehicle.id) {
       url =
         formData.tipoVeiculo === "CARRO"
-          ? `${process.env.REACT_APP_BACKEND_URL}/api/veiculos/carros/${editingVehicle.id}`
-          : `${process.env.REACT_APP_BACKEND_URL}/api/veiculos/motos/${editingVehicle.id}`;
+          ? `${BACKEND_URL}/api/veiculos/carros/${editingVehicle.id}`
+          : `${BACKEND_URL}/api/veiculos/motos/${editingVehicle.id}`;
       method = "PUT";
     } else {
       url =
         formData.tipoVeiculo === "CARRO"
-          ? `${process.env.REACT_APP_BACKEND_URL}/api/veiculos/carros`
-          : `${process.env.REACT_APP_BACKEND_URL}/api/veiculos/motos`;
+          ? `${BACKEND_URL}/api/veiculos/carros`
+          : `${BACKEND_URL}/api/veiculos/motos`;
       method = "POST";
     }
 
@@ -121,7 +124,13 @@ export function VehicleFormModal({
             : `${formData.tipoVeiculo} cadastrado com sucesso!`
         );
 
-        const savedVehicle = await res.json(); 
+        let savedVehicle = null;
+        try {
+          savedVehicle = await res.json();
+        } catch (err) {
+          //ignorar
+        }
+
         onSubmit(savedVehicle);
         window.location.reload()
         onOpenChange(false);

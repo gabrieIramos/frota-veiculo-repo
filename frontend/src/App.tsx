@@ -1,3 +1,5 @@
+/// <reference types="vite/client" />
+
 import { useState, useEffect } from "react";
 import {
   Car,
@@ -77,9 +79,11 @@ export default function App() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [vehicleToDelete, setVehicleToDelete] = useState<string | null>(null);
 
+  const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+
   const fetchVehicles = async () => {
     try {
-      const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/veiculos`);
+      const res = await fetch(`${BACKEND_URL}/api/veiculos`);
       if (!res.ok) throw new Error("Erro ao buscar veículos");
       const data = await res.json();
       setVehicles(data); // Atualiza o estado direto
@@ -90,8 +94,13 @@ export default function App() {
   };
 
   useEffect(() => {
-    fetchVehicles();
-  }, []);
+  if (!BACKEND_URL) {
+    console.error("REACT_APP_BACKEND_URL não definido");
+    return;
+  }
+  fetchVehicles();
+}, [BACKEND_URL]);
+
 
   const handleAddVehicle = (
     vehicleData: Omit<Vehicle, "id"> & { id?: string }
@@ -126,7 +135,7 @@ export default function App() {
     if (!vehicleToDelete) return;
 
     try {
-      const res = await fetch(`http://localhost:8080/api/veiculos/${vehicleToDelete}`, {
+      const res = await fetch(`${BACKEND_URL}/api/veiculos/${vehicleToDelete}`, {
         method: "DELETE",
       });
 
