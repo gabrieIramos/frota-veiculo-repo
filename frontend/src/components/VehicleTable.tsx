@@ -12,14 +12,13 @@ import { Badge } from "./ui/badge";
 
 export interface Vehicle {
   id: string;
-  tipoVeiculo: "CARRO" | "MOTO";
-  modelo: string;
-  fabricante: string;
-  ano: number;
-  preco: number;
-  cilindrada?: number;
-  tipoCombustivel?: string;
-  quantidadePortas?: number;
+  plate: string;
+  type: "Carro" | "Moto";
+  model: string;
+  manufacturer: string;
+  year: number;
+  price: number;
+  status: "Ativo" | "Inativo";
 }
 
 interface VehicleTableProps {
@@ -41,6 +40,7 @@ export function VehicleTable({ vehicles, onEdit, onDelete }: VehicleTableProps) 
       <Table>
         <TableHeader>
           <TableRow className="bg-muted/50">
+            <TableHead>Placa</TableHead>
             <TableHead>Tipo</TableHead>
             <TableHead>Modelo</TableHead>
             <TableHead>Fabricante</TableHead>
@@ -59,27 +59,36 @@ export function VehicleTable({ vehicles, onEdit, onDelete }: VehicleTableProps) 
             </TableRow>
           ) : (
             vehicles.map((vehicle, index) => (
-              <TableRow
+              <TableRow 
                 key={vehicle.id}
                 className={index % 2 === 0 ? "bg-background" : "bg-muted/20"}
               >
-
+                <TableCell>{vehicle.plate}</TableCell>
                 <TableCell>
-                  <Badge
-                    variant={vehicle.tipoVeiculo === "CARRO" ? "default" : "secondary"}
-                    className={vehicle.tipoVeiculo === "CARRO" ? "bg-primary" : "bg-accent text-accent-foreground"}
+                  <Badge 
+                    variant={vehicle.type === "Carro" ? "default" : "secondary"}
+                    className={vehicle.type === "Carro" ? "bg-primary" : "bg-accent text-accent-foreground"}
                   >
-                    {vehicle.tipoVeiculo}
+                    {vehicle.type}
                   </Badge>
                 </TableCell>
-                <TableCell>{vehicle.modelo}</TableCell>
-                <TableCell>{vehicle.fabricante}</TableCell>
-                <TableCell>{vehicle.ano}</TableCell>
-                <TableCell>{formatPrice(vehicle.preco)}</TableCell>
+                <TableCell>{vehicle.model}</TableCell>
+                <TableCell>{vehicle.manufacturer}</TableCell>
+                <TableCell>{vehicle.year}</TableCell>
+                <TableCell>{formatPrice(vehicle.price)}</TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-success" />
-                    <span className="text-success">Ativo</span>
+                    {vehicle.status === "Ativo" ? (
+                      <>
+                        <CheckCircle2 className="h-4 w-4 text-success" />
+                        <span className="text-success">Ativo</span>
+                      </>
+                    ) : (
+                      <>
+                        <XCircle className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-muted-foreground">Inativo</span>
+                      </>
+                    )}
                   </div>
                 </TableCell>
                 <TableCell className="text-right">

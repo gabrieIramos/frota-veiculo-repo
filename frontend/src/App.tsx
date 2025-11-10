@@ -1,6 +1,4 @@
-/// <reference types="vite/client" />
-
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   Car,
   LayoutDashboard,
@@ -52,8 +50,55 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "./components/ui/alert-dialog";
+import { LoginForm } from "./components/LoginForm";
+import { RegisterForm } from "./components/RegisterForm";
+
+// Mock data
+const initialVehicles: Vehicle[] = [
+  {
+    id: "1",
+    plate: "ABC-1234",
+    type: "Carro",
+    model: "Civic",
+    manufacturer: "Honda",
+    year: 2022,
+    price: 125000,
+    status: "Ativo",
+  },
+  {
+    id: "2",
+    plate: "XYZ-5678",
+    type: "Moto",
+    model: "CG 160",
+    manufacturer: "Honda",
+    year: 2023,
+    price: 15000,
+    status: "Ativo",
+  },
+  {
+    id: "3",
+    plate: "DEF-9012",
+    type: "Carro",
+    model: "Corolla",
+    manufacturer: "Toyota",
+    year: 2021,
+    price: 110000,
+    status: "Inativo",
+  },
+  {
+    id: "4",
+    plate: "GHI-3456",
+    type: "Moto",
+    model: "Ninja 400",
+    manufacturer: "Kawasaki",
+    year: 2024,
+    price: 35000,
+    status: "Ativo",
+  },
+];
 
 const menuItems = [
+  { icon: LayoutDashboard, label: "Dashboard", active: false, hasSubmenu: false },
   {
     icon: Car,
     label: "Gestão de Frotas",
@@ -61,12 +106,22 @@ const menuItems = [
     hasSubmenu: true,
     submenu: [
       { icon: List, label: "Veículos Cadastrados", active: true },
-    ]
+      { icon: Plus, label: "Cadastrar Novo", active: false },
+    ],
   },
+  { icon: Wrench, label: "Manutenção", active: false, hasSubmenu: false },
+  { icon: FileText, label: "Relatórios", active: false, hasSubmenu: false },
+  { icon: Settings, label: "Configurações", active: false, hasSubmenu: false },
 ];
 
 export default function App() {
-  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [currentView, setCurrentView] = useState<"login" | "register">("login");
+  const [currentUser, setCurrentUser] = useState<{
+    name: string;
+    email: string;
+  } | null>(null);
+  const [vehicles, setVehicles] = useState<Vehicle[]>(initialVehicles);
   const [searchTerm, setSearchTerm] = useState("");
   const [filters, setFilters] = useState({
     type: "all",
@@ -78,29 +133,6 @@ export default function App() {
   const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [vehicleToDelete, setVehicleToDelete] = useState<string | null>(null);
-
-  const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
-
-  const fetchVehicles = async () => {
-    try {
-      const res = await fetch(`${BACKEND_URL}/api/veiculos`);
-      if (!res.ok) throw new Error("Erro ao buscar veículos");
-      const data = await res.json();
-      setVehicles(data); // Atualiza o estado direto
-    } catch (err: any) {
-      console.error(err);
-      alert(err.message);
-    }
-  };
-
-  useEffect(() => {
-  if (!BACKEND_URL) {
-    console.error("REACT_APP_BACKEND_URL não definido");
-    return;
-  }
-  fetchVehicles();
-}, [BACKEND_URL]);
-
 
   const handleAddVehicle = (
     vehicleData: Omit<Vehicle, "id"> & { id?: string }
@@ -131,26 +163,12 @@ export default function App() {
     setDeleteDialogOpen(true);
   };
 
-  const handleDeleteConfirm = async () => {
-    if (!vehicleToDelete) return;
-
-    try {
-      const res = await fetch(`${BACKEND_URL}/api/veiculos/${vehicleToDelete}`, {
-        method: "DELETE",
-      });
-
-      if (!res.ok) {
-        const error = await res.text();
-        throw new Error(error || "Erro ao deletar veículo");
-      }
+  const handleDeleteConfirm = () => {
+    if (vehicleToDelete) {
       setVehicles(vehicles.filter((v) => v.id !== vehicleToDelete));
       setVehicleToDelete(null);
-      setDeleteDialogOpen(false);
-      alert("Veículo deletado com sucesso!");
-    } catch (err: any) {
-      console.error(err);
-      alert("Erro ao deletar veículo: " + err.message);
     }
+    setDeleteDialogOpen(false);
   };
 
   const handleClearFilters = () => {
@@ -164,23 +182,24 @@ export default function App() {
 
   const filteredVehicles = vehicles.filter((vehicle) => {
     const matchesSearch =
-      vehicle.modelo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      vehicle.fabricante.toLowerCase().includes(searchTerm.toLowerCase());
+      vehicle.plate.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      vehicle.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      vehicle.manufacturer.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesType =
-      filters.type === "all" || vehicle.tipoVeiculo === filters.type;
+      filters.type === "all" || vehicle.type === filters.type;
 
     const matchesManufacturer =
       !filters.manufacturer ||
-      vehicle.fabricante
+      vehicle.manufacturer
         .toLowerCase()
         .includes(filters.manufacturer.toLowerCase());
 
     const matchesYearFrom =
-      !filters.yearFrom || vehicle.ano >= parseInt(filters.yearFrom);
+      !filters.yearFrom || vehicle.year >= parseInt(filters.yearFrom);
 
     const matchesYearTo =
-      !filters.yearTo || vehicle.ano <= parseInt(filters.yearTo);
+      !filters.yearTo || vehicle.year <= parseInt(filters.yearTo);
 
     return (
       matchesSearch &&
@@ -191,6 +210,59 @@ export default function App() {
     );
   });
 
+  const handleLogin = (email: string, password: string) => {
+    // TODO: Integrar com backend real
+    // Por enquanto, simulando login bem-sucedido
+    setCurrentUser({
+      name: "Usuário Admin",
+      email: email,
+    });
+    setIsAuthenticated(true);
+    console.log("Login:", { email, password });
+  };
+
+  const handleRegister = (
+    name: string,
+    email: string,
+    password: string,
+    company: string
+  ) => {
+    // TODO: Integrar com backend real
+    // Por enquanto, simulando cadastro bem-sucedido e fazendo login automático
+    setCurrentUser({
+      name: name,
+      email: email,
+    });
+    setIsAuthenticated(true);
+    console.log("Register:", { name, email, password, company });
+  };
+
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    setCurrentUser(null);
+    setCurrentView("login");
+  };
+
+  // Se não estiver autenticado, mostrar telas de login/cadastro
+  if (!isAuthenticated) {
+    if (currentView === "login") {
+      return (
+        <LoginForm
+          onLogin={handleLogin}
+          onNavigateToRegister={() => setCurrentView("register")}
+        />
+      );
+    } else {
+      return (
+        <RegisterForm
+          onRegister={handleRegister}
+          onNavigateToLogin={() => setCurrentView("login")}
+        />
+      );
+    }
+  }
+
+  // Se autenticado, mostrar dashboard
   return (
     <SidebarProvider>
       <div className="flex min-h-screen w-full">
@@ -265,16 +337,17 @@ export default function App() {
             <div className="space-y-3">
               <div className="flex items-center gap-3 px-2">
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
-                  <span>UA</span>
+                  <span>{currentUser?.name?.substring(0, 2).toUpperCase() || "UA"}</span>
                 </div>
                 <div className="flex-1">
-                  <p className="text-sm">Usuário Admin</p>
-                  <p className="text-xs text-muted-foreground">admin@fleet.com</p>
+                  <p className="text-sm">{currentUser?.name || "Usuário Admin"}</p>
+                  <p className="text-xs text-muted-foreground">{currentUser?.email || "admin@fleet.com"}</p>
                 </div>
               </div>
               <Button
                 variant="ghost"
                 className="w-full justify-start gap-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                onClick={handleLogout}
               >
                 <LogOut className="h-4 w-4" />
                 <span>Sair</span>
@@ -315,7 +388,7 @@ export default function App() {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
-                  placeholder="Buscar por modelo ou fabricante..."
+                  placeholder="Buscar por placa, modelo ou fabricante..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-9"

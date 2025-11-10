@@ -70,7 +70,7 @@ export function VehicleFilters({
               <Label htmlFor="filter-type">Tipo de Veículo</Label>
               <Select
                 value={filters.type}
-                onValueChange={(value: any) =>
+                onValueChange={(value) =>
                   onFilterChange({ ...filters, type: value })
                 }
               >
@@ -79,8 +79,8 @@ export function VehicleFilters({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos</SelectItem>
-                  <SelectItem value="CARRO">Carro</SelectItem>
-                  <SelectItem value="MOTO">Moto</SelectItem>
+                  <SelectItem value="Carro">Carro</SelectItem>
+                  <SelectItem value="Moto">Moto</SelectItem>
                 </SelectContent>
               </Select>
             </div>

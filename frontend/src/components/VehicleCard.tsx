@@ -23,15 +23,16 @@ export function VehicleCard({ vehicle, onEdit, onDelete }: VehicleCardProps) {
       <CardContent className="p-4">
         <div className="flex items-start justify-between mb-3">
           <div className="flex-1">
-            <div className="flex items-center gap-2 mb-1">              
+            <div className="flex items-center gap-2 mb-1">
+              <span className="font-medium">{vehicle.plate}</span>
               <Badge 
-                variant={vehicle.tipoVeiculo === "CARRO" ? "default" : "secondary"}
-                className={vehicle.tipoVeiculo === "CARRO" ? "bg-primary" : "bg-accent text-accent-foreground"}
+                variant={vehicle.type === "Carro" ? "default" : "secondary"}
+                className={vehicle.type === "Carro" ? "bg-primary" : "bg-accent text-accent-foreground"}
               >
-                {vehicle.tipoVeiculo}
+                {vehicle.type}
               </Badge>
             </div>
-            <p className="text-muted-foreground">{vehicle.modelo}</p>
+            <p className="text-muted-foreground">{vehicle.model}</p>
           </div>
           <div className="flex items-center gap-1">
             <Button
@@ -57,16 +58,32 @@ export function VehicleCard({ vehicle, onEdit, onDelete }: VehicleCardProps) {
         <div className="grid grid-cols-2 gap-3">
           <div>
             <p className="text-muted-foreground">Fabricante</p>
-            <p>{vehicle.fabricante}</p>
+            <p>{vehicle.manufacturer}</p>
           </div>
           <div>
             <p className="text-muted-foreground">Ano</p>
-            <p>{vehicle.ano}</p>
+            <p>{vehicle.year}</p>
           </div>
           <div>
             <p className="text-muted-foreground">Preço</p>
-            <p>{formatPrice(vehicle.preco)}</p>
-          </div>          
+            <p>{formatPrice(vehicle.price)}</p>
+          </div>
+          <div>
+            <p className="text-muted-foreground">Status</p>
+            <div className="flex items-center gap-1">
+              {vehicle.status === "Ativo" ? (
+                <>
+                  <CheckCircle2 className="h-4 w-4 text-success" />
+                  <span className="text-success">Ativo</span>
+                </>
+              ) : (
+                <>
+                  <XCircle className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-muted-foreground">Inativo</span>
+                </>
+              )}
+            </div>
+          </div>
         </div>
       </CardContent>
     </Card>
