@@ -13,14 +13,14 @@ public class Carro extends Veiculo {
     private int quantidade_portas;
     private TipoCombustivel tipoCombustivel;
 
-    public Carro(Integer id, String modelo, String fabricante, int ano, double preco, int quantidade_portas, TipoCombustivel tipo_combustivel) {
-        super(id, modelo, fabricante, ano, preco);
+    public Carro(Integer id, String modelo, String fabricante, int ano, double preco, Integer usuarioId, String status, int quantidade_portas, TipoCombustivel tipo_combustivel) {
+        super(id, modelo, fabricante, ano, preco, usuarioId, status);
         this.quantidade_portas = quantidade_portas;
         this.tipoCombustivel = tipo_combustivel;
     }
 
-    public Carro(String modelo, String fabricante, int ano, double preco, int quantidade_portas, TipoCombustivel tipo_combustivel) {
-        super(modelo, fabricante, ano, preco);
+    public Carro(String modelo, String fabricante, int ano, double preco, Integer usuarioId, String status, int quantidade_portas, TipoCombustivel tipo_combustivel) {
+        super(modelo, fabricante, ano, preco, usuarioId, status);
         this.quantidade_portas = quantidade_portas;
         this.tipoCombustivel = tipo_combustivel;
     }

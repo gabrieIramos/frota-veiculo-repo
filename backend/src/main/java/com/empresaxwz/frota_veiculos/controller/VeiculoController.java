@@ -41,6 +41,8 @@ public class VeiculoController {
                 carroDTO.getFabricante(),
                 carroDTO.getAno(),
                 carroDTO.getPreco(),
+                carroDTO.getUsuarioId(),
+                carroDTO.getStatus(),
                 carroDTO.getQuantidadePortas(),
                 carroDTO.getTipoCombustivel()
         );
@@ -60,6 +62,8 @@ public class VeiculoController {
                 motoDTO.getFabricante(),
                 motoDTO.getAno(),
                 motoDTO.getPreco(),
+                motoDTO.getUsuarioId(),
+                motoDTO.getStatus(),
                 motoDTO.getCilindrada()
         );
         try {
@@ -72,8 +76,14 @@ public class VeiculoController {
 
 
     @GetMapping
-    public ResponseEntity<List<VeiculoResponseDTO>> listarTodosVeiculos() {
-        List<Veiculo> veiculos = veiculoService.listarTodosVeiculos();
+    public ResponseEntity<List<VeiculoResponseDTO>> listarTodosVeiculos(@RequestParam(required = false) Integer usuarioId) {
+        List<Veiculo> veiculos;
+        
+        if (usuarioId != null) {
+            veiculos = veiculoService.listarVeiculosPorUsuario(usuarioId);
+        } else {
+            veiculos = veiculoService.listarTodosVeiculos();
+        }
 
         List<VeiculoResponseDTO> dtos = veiculos.stream()
                 .map(VeiculoResponseDTO::fromEntity)
@@ -112,6 +122,8 @@ public class VeiculoController {
                 carroDTO.getFabricante(),
                 carroDTO.getAno(),
                 carroDTO.getPreco(),
+                carroDTO.getUsuarioId(),
+                carroDTO.getStatus(),
                 carroDTO.getQuantidadePortas(),
                 carroDTO.getTipoCombustivel()
         );
@@ -133,6 +145,8 @@ public class VeiculoController {
                 motoDTO.getFabricante(),
                 motoDTO.getAno(),
                 motoDTO.getPreco(),
+                motoDTO.getUsuarioId(),
+                motoDTO.getStatus(),
                 motoDTO.getCilindrada()
         );
         try {

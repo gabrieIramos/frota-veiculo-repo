@@ -18,6 +18,8 @@ public class VeiculoResponseDTO {
     private String fabricante;
     private int ano;
     private double preco;
+    private Integer usuarioId;
+    private String status;
     private String tipoVeiculo;
 
     private Integer quantidadePortas;
@@ -36,6 +38,8 @@ public class VeiculoResponseDTO {
         dto.setFabricante(veiculo.getFabricante());
         dto.setAno(veiculo.getAno());
         dto.setPreco(veiculo.getPreco());
+        dto.setUsuarioId(veiculo.getUsuarioId());
+        dto.setStatus(veiculo.getStatus());
 
         if (veiculo instanceof Carro carro) {
 

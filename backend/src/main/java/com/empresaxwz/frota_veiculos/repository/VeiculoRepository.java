@@ -34,6 +34,8 @@ public class VeiculoRepository {
             String fabricante = rs.getString("fabricante");
             int ano = rs.getInt("ano");
             double preco = rs.getDouble("preco");
+            Integer usuarioId = rs.getInt("usuario_id");
+            String status = rs.getString("status");
             String tipoVeiculo = rs.getString("tipo_veiculo");
 
             if ("CARRO".equalsIgnoreCase(tipoVeiculo)) {
@@ -49,11 +51,11 @@ public class VeiculoRepository {
                     }
                 }
 
-                return new Carro(id, modelo, fabricante, ano, preco, quantidadePortas, tipoCombustivel);
+                return new Carro(id, modelo, fabricante, ano, preco, usuarioId, status, quantidadePortas, tipoCombustivel);
             } else if ("MOTO".equalsIgnoreCase(tipoVeiculo)) {
 
                 int cilindrada = rs.getInt("cilindrada");
-                return new Moto(id, modelo, fabricante, ano, preco, cilindrada);
+                return new Moto(id, modelo, fabricante, ano, preco, usuarioId, status, cilindrada);
             }
 
             return null;
@@ -62,7 +64,7 @@ public class VeiculoRepository {
 
     @Transactional
     public Veiculo save(Veiculo veiculo) {
-        String sqlVeiculo = "INSERT INTO veiculos (modelo, fabricante, ano, preco, tipo_veiculo) VALUES (?, ?, ?, ?, ?)";
+        String sqlVeiculo = "INSERT INTO veiculos (modelo, fabricante, ano, preco, usuario_id, status, tipo_veiculo) VALUES (?, ?, ?, ?, ?, ?, ?)";
         KeyHolder keyHolder = new GeneratedKeyHolder();
 
         jdbcTemplate.update(connection -> {
@@ -71,10 +73,12 @@ public class VeiculoRepository {
             ps.setString(2, veiculo.getFabricante());
             ps.setInt(3, veiculo.getAno());
             ps.setDouble(4, veiculo.getPreco());
+            ps.setInt(5, veiculo.getUsuarioId());
+            ps.setString(6, veiculo.getStatus());
             if (veiculo instanceof Carro) {
-                ps.setString(5, "CARRO");
+                ps.setString(7, "CARRO");
             } else if (veiculo instanceof Moto) {
-                ps.setString(5, "MOTO");
+                ps.setString(7, "MOTO");
             } else {
                 throw new IllegalArgumentException("Tipo de veículo desconhecido para salvar.");
             }
@@ -106,7 +110,7 @@ public class VeiculoRepository {
 
     @Transactional
     public Optional<Veiculo> findById(Integer id) {
-        String sql = "SELECT v.id, v.modelo, v.fabricante, v.ano, v.preco, v.tipo_veiculo, " +
+        String sql = "SELECT v.id, v.modelo, v.fabricante, v.ano, v.preco, v.usuario_id, v.status, v.tipo_veiculo, " +
                 "c.quantidade_portas, c.tipo_combustivel, " +
                 "m.cilindrada " +
                 "FROM veiculos v " +
@@ -118,7 +122,7 @@ public class VeiculoRepository {
     }
 
     public List<Veiculo> findAll() {
-        String sql = "SELECT v.id, v.modelo, v.fabricante, v.ano, v.preco, v.tipo_veiculo, " +
+        String sql = "SELECT v.id, v.modelo, v.fabricante, v.ano, v.preco, v.usuario_id, v.status, v.tipo_veiculo, " +
                 "c.quantidade_portas, c.tipo_combustivel, " +
                 "m.cilindrada " +
                 "FROM veiculos v " +
@@ -127,14 +131,27 @@ public class VeiculoRepository {
         return jdbcTemplate.query(sql, veiculoRowMapper);
     }
 
+    public List<Veiculo> findByUsuarioId(Integer usuarioId) {
+        String sql = "SELECT v.id, v.modelo, v.fabricante, v.ano, v.preco, v.usuario_id, v.status, v.tipo_veiculo, " +
+                "c.quantidade_portas, c.tipo_combustivel, " +
+                "m.cilindrada " +
+                "FROM veiculos v " +
+                "LEFT JOIN carros c ON v.id = c.veiculo_id " +
+                "LEFT JOIN motos m ON v.id = m.veiculo_id " +
+                "WHERE v.usuario_id = ?";
+        return jdbcTemplate.query(sql, veiculoRowMapper, usuarioId);
+    }
+
     @Transactional
     public void update(Veiculo veiculo) {
-        String sqlVeiculo = "UPDATE veiculos SET modelo = ?, fabricante = ?, ano = ?,  preco = ?, tipo_veiculo = ? WHERE id = ?";
-        int updatedRows = jdbcTemplate.update(sqlVeiculo,
+        String sqlVeiculo = "UPDATE veiculos SET modelo = ?, fabricante = ?, ano = ?,  preco = ?, usuario_id = ?, status = ?, tipo_veiculo = ? WHERE id = ?";
+        jdbcTemplate.update(sqlVeiculo,
                 veiculo.getModelo(),
                 veiculo.getFabricante(),
                 veiculo.getAno(),
                 veiculo.getPreco(),
+                veiculo.getUsuarioId(),
+                veiculo.getStatus(),
                 (veiculo instanceof Carro ? "CARRO" : "MOTO"),
                 veiculo.getId());
 
@@ -161,7 +178,7 @@ public class VeiculoRepository {
 
     public List<Veiculo> findByFiltro(String tipo, String modelo, Integer ano, String fabricante, Double preco_minimo, Double preco_maximo) {
         StringBuilder sqlBuilder = new StringBuilder(
-                "SELECT v.id, v.modelo, v.fabricante, v.ano, v.preco, v.tipo_veiculo, " +
+                "SELECT v.id, v.modelo, v.fabricante, v.ano, v.preco, v.usuario_id, v.status, v.tipo_veiculo, " +
                         "c.quantidade_portas, c.tipo_combustivel, " +
                         "m.cilindrada " +
                         "FROM veiculos v " +

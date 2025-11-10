@@ -13,12 +13,16 @@ public abstract class Veiculo {
     private String fabricante;
     private int ano;
     private double preco;
+    private Integer usuarioId;
+    private String status; // ATIVO ou INATIVO
 
-    public Veiculo(String modelo, String fabricante, int ano, double preco) {
+    public Veiculo(String modelo, String fabricante, int ano, double preco, Integer usuarioId, String status) {
         this.modelo = modelo;
         this.fabricante = fabricante;
         this.ano = ano;
         this.preco = preco;
+        this.usuarioId = usuarioId;
+        this.status = status;
     }
 
 }

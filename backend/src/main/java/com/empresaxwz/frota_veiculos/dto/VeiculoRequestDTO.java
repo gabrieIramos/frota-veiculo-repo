@@ -19,13 +19,19 @@ public class VeiculoRequestDTO {
     @NotBlank(message = "Fabricante é obrigatório.")
     private String fabricante;
 
-    @Min(value = 1850, message = "Ano deve ser posterior a 1850.")
+    @Min(value = 1900, message = "Ano deve ser posterior a 1900.")
     @NotNull(message = "Ano é obrigatório.")
-    @Max(value = 9999, message = "Ano Invalido.")
+    @Max(value = 2026, message = "Ano não pode ser superior a 2026.")
     private Integer ano;
 
     @NotNull(message = "Preço é obrigatório.")
     @Min(value = 0, message = "Preço deve ser positivo.")
     @Max(value = 999999999, message = "Preço máximo excedido (limite de 999.999.999,99).")
     private Double preco;
+
+    @NotNull(message = "Usuário é obrigatório.")
+    private Integer usuarioId;
+
+    @NotBlank(message = "Status é obrigatório.")
+    private String status;
 }

@@ -22,7 +22,7 @@ import { Vehicle } from "./VehicleTable";
 interface VehicleFormModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (vehicle: Omit<Vehicle, "id"> & { id?: string }) => void;
+  onSubmit: (vehicle: any) => void;
   editingVehicle?: Vehicle | null;
 }
 
@@ -33,35 +33,41 @@ export function VehicleFormModal({
   editingVehicle,
 }: VehicleFormModalProps) {
   const [formData, setFormData] = useState({
-    plate: "",
-    type: "Carro" as "Carro" | "Moto",
-    model: "",
-    manufacturer: "",
-    year: new Date().getFullYear(),
-    price: 0,
-    status: "Ativo" as "Ativo" | "Inativo",
+    tipoVeiculo: "CARRO",
+    modelo: "",
+    fabricante: "",
+    ano: new Date().getFullYear(),
+    preco: 0,
+    status: "ATIVO",
+    quantidadePortas: 4,
+    tipoCombustivel: "FLEX",
+    cilindrada: 150,
   });
 
   useEffect(() => {
     if (editingVehicle) {
       setFormData({
-        plate: editingVehicle.plate,
-        type: editingVehicle.type,
-        model: editingVehicle.model,
-        manufacturer: editingVehicle.manufacturer,
-        year: editingVehicle.year,
-        price: editingVehicle.price,
-        status: editingVehicle.status,
+        tipoVeiculo: editingVehicle.tipoVeiculo || "CARRO",
+        modelo: editingVehicle.modelo || "",
+        fabricante: editingVehicle.fabricante || "",
+        ano: editingVehicle.ano || new Date().getFullYear(),
+        preco: editingVehicle.preco || 0,
+        status: editingVehicle.status || "ATIVO",
+        quantidadePortas: editingVehicle.quantidadePortas || 4,
+        tipoCombustivel: editingVehicle.tipoCombustivel || "FLEX",
+        cilindrada: editingVehicle.cilindrada || 150,
       });
     } else {
       setFormData({
-        plate: "",
-        type: "Carro",
-        model: "",
-        manufacturer: "",
-        year: new Date().getFullYear(),
-        price: 0,
-        status: "Ativo",
+        tipoVeiculo: "CARRO",
+        modelo: "",
+        fabricante: "",
+        ano: new Date().getFullYear(),
+        preco: 0,
+        status: "ATIVO",
+        quantidadePortas: 4,
+        tipoCombustivel: "FLEX",
+        cilindrada: 150,
       });
     }
   }, [editingVehicle, open]);
@@ -78,7 +84,7 @@ export function VehicleFormModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>
             {editingVehicle ? "Editar Veículo" : "Cadastrar Novo Veículo"}
@@ -89,95 +95,149 @@ export function VehicleFormModal({
               : "Preencha os dados do veículo para cadastrá-lo no sistema."}
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit}>
-          <div className="grid gap-4 py-4">
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
+          <div className="grid gap-4 py-4 overflow-y-auto pr-2">
             <div className="grid gap-2">
-              <Label htmlFor="plate">Placa</Label>
-              <Input
-                id="plate"
-                placeholder="ABC-1234"
-                value={formData.plate}
-                onChange={(e) =>
-                  setFormData({ ...formData, plate: e.target.value })
-                }
-                required
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="type">Tipo de Veículo</Label>
+              <Label htmlFor="tipoVeiculo">Tipo de Veículo</Label>
               <Select
-                value={formData.type}
-                onValueChange={(value: "Carro" | "Moto") =>
-                  setFormData({ ...formData, type: value })
+                value={formData.tipoVeiculo}
+                onValueChange={(value: string) =>
+                  setFormData({ ...formData, tipoVeiculo: value })
                 }
+                disabled={!!editingVehicle}
               >
-                <SelectTrigger id="type">
+                <SelectTrigger id="tipoVeiculo">
                   <SelectValue placeholder="Selecione o tipo" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Carro">Carro</SelectItem>
-                  <SelectItem value="Moto">Moto</SelectItem>
+                  <SelectItem value="CARRO">Carro</SelectItem>
+                  <SelectItem value="MOTO">Moto</SelectItem>
                 </SelectContent>
               </Select>
             </div>
+
             <div className="grid gap-2">
-              <Label htmlFor="model">Modelo</Label>
+              <Label htmlFor="modelo">Modelo</Label>
               <Input
-                id="model"
+                id="modelo"
                 placeholder="Ex: Civic, CG 160"
-                value={formData.model}
+                value={formData.modelo}
                 onChange={(e) =>
-                  setFormData({ ...formData, model: e.target.value })
+                  setFormData({ ...formData, modelo: e.target.value })
                 }
                 required
               />
             </div>
+
             <div className="grid gap-2">
-              <Label htmlFor="manufacturer">Fabricante</Label>
+              <Label htmlFor="fabricante">Fabricante</Label>
               <Input
-                id="manufacturer"
+                id="fabricante"
                 placeholder="Ex: Honda, Toyota"
-                value={formData.manufacturer}
+                value={formData.fabricante}
                 onChange={(e) =>
-                  setFormData({ ...formData, manufacturer: e.target.value })
+                  setFormData({ ...formData, fabricante: e.target.value })
                 }
                 required
               />
             </div>
+
             <div className="grid gap-2">
-              <Label htmlFor="year">Ano</Label>
+              <Label htmlFor="ano">Ano</Label>
               <Input
-                id="year"
+                id="ano"
                 type="number"
                 min="1900"
                 max={new Date().getFullYear() + 1}
-                value={formData.year}
-                onChange={(e) =>
-                  setFormData({ ...formData, year: parseInt(e.target.value) })
-                }
+                value={formData.ano}
+                onChange={(e) => {
+                  const value = parseInt(e.target.value);
+                  setFormData({ ...formData, ano: isNaN(value) ? new Date().getFullYear() : value });
+                }}
                 required
               />
             </div>
+
             <div className="grid gap-2">
-              <Label htmlFor="price">Preço (R$)</Label>
+              <Label htmlFor="preco">Preço (R$)</Label>
               <Input
-                id="price"
+                id="preco"
                 type="number"
                 min="0"
                 step="0.01"
                 placeholder="0.00"
-                value={formData.price}
-                onChange={(e) =>
-                  setFormData({ ...formData, price: parseFloat(e.target.value) })
-                }
+                value={formData.preco}
+                onChange={(e) => {
+                  const value = parseFloat(e.target.value);
+                  setFormData({ ...formData, preco: isNaN(value) ? 0 : value });
+                }}
                 required
               />
             </div>
+
+            {formData.tipoVeiculo === "CARRO" && (
+              <>
+                <div className="grid gap-2">
+                  <Label htmlFor="quantidadePortas">Quantidade de Portas</Label>
+                  <Input
+                    id="quantidadePortas"
+                    type="number"
+                    min="1"
+                    max="8"
+                    value={formData.quantidadePortas}
+                    onChange={(e) => {
+                      const value = parseInt(e.target.value);
+                      setFormData({ ...formData, quantidadePortas: isNaN(value) ? 4 : value });
+                    }}
+                    required
+                  />
+                </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="tipoCombustivel">Tipo de Combustível</Label>
+                  <Select
+                    value={formData.tipoCombustivel}
+                    onValueChange={(value: string) =>
+                      setFormData({ ...formData, tipoCombustivel: value })
+                    }
+                  >
+                    <SelectTrigger id="tipoCombustivel">
+                      <SelectValue placeholder="Selecione o combustível" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="GASOLINA">Gasolina</SelectItem>
+                      <SelectItem value="ETANOL">Etanol</SelectItem>
+                      <SelectItem value="DIESEL">Diesel</SelectItem>
+                      <SelectItem value="FLEX">Flex</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </>
+            )}
+
+            {formData.tipoVeiculo === "MOTO" && (
+              <div className="grid gap-2">
+                <Label htmlFor="cilindrada">Cilindrada (cc)</Label>
+                <Input
+                  id="cilindrada"
+                  type="number"
+                  min="1"
+                  max="10000"
+                  value={formData.cilindrada}
+                  onChange={(e) => {
+                    const value = parseInt(e.target.value);
+                    setFormData({ ...formData, cilindrada: isNaN(value) ? 150 : value });
+                  }}
+                  required
+                />
+              </div>
+            )}
+
             <div className="grid gap-2">
               <Label htmlFor="status">Status</Label>
               <Select
                 value={formData.status}
-                onValueChange={(value: "Ativo" | "Inativo") =>
+                onValueChange={(value: string) =>
                   setFormData({ ...formData, status: value })
                 }
               >
@@ -185,13 +245,13 @@ export function VehicleFormModal({
                   <SelectValue placeholder="Selecione o status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Ativo">Ativo</SelectItem>
-                  <SelectItem value="Inativo">Inativo</SelectItem>
+                  <SelectItem value="ATIVO">Ativo</SelectItem>
+                  <SelectItem value="INATIVO">Inativo</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
-          <DialogFooter>
+          <DialogFooter className="pt-4">
             <Button
               type="button"
               variant="outline"

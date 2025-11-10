@@ -12,13 +12,15 @@ import { Badge } from "./ui/badge";
 
 export interface Vehicle {
   id: string;
-  plate: string;
-  type: "Carro" | "Moto";
-  model: string;
-  manufacturer: string;
-  year: number;
-  price: number;
-  status: "Ativo" | "Inativo";
+  modelo: string;
+  fabricante: string;
+  ano: number;
+  preco: number;
+  status: string;
+  tipoVeiculo: string;
+  quantidadePortas?: number;
+  tipoCombustivel?: string;
+  cilindrada?: number;
 }
 
 interface VehicleTableProps {
@@ -40,7 +42,6 @@ export function VehicleTable({ vehicles, onEdit, onDelete }: VehicleTableProps) 
       <Table>
         <TableHeader>
           <TableRow className="bg-muted/50">
-            <TableHead>Placa</TableHead>
             <TableHead>Tipo</TableHead>
             <TableHead>Modelo</TableHead>
             <TableHead>Fabricante</TableHead>
@@ -53,7 +54,7 @@ export function VehicleTable({ vehicles, onEdit, onDelete }: VehicleTableProps) 
         <TableBody>
           {vehicles.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={8} className="text-center text-muted-foreground h-32">
+              <TableCell colSpan={7} className="text-center text-muted-foreground h-32">
                 Nenhum veículo cadastrado. Clique em "Cadastrar Novo Veículo" para começar.
               </TableCell>
             </TableRow>
@@ -63,22 +64,21 @@ export function VehicleTable({ vehicles, onEdit, onDelete }: VehicleTableProps) 
                 key={vehicle.id}
                 className={index % 2 === 0 ? "bg-background" : "bg-muted/20"}
               >
-                <TableCell>{vehicle.plate}</TableCell>
                 <TableCell>
                   <Badge 
-                    variant={vehicle.type === "Carro" ? "default" : "secondary"}
-                    className={vehicle.type === "Carro" ? "bg-primary" : "bg-accent text-accent-foreground"}
+                    variant={vehicle.tipoVeiculo === "CARRO" ? "default" : "secondary"}
+                    className={vehicle.tipoVeiculo === "CARRO" ? "bg-primary" : "bg-accent text-accent-foreground"}
                   >
-                    {vehicle.type}
+                    {vehicle.tipoVeiculo}
                   </Badge>
                 </TableCell>
-                <TableCell>{vehicle.model}</TableCell>
-                <TableCell>{vehicle.manufacturer}</TableCell>
-                <TableCell>{vehicle.year}</TableCell>
-                <TableCell>{formatPrice(vehicle.price)}</TableCell>
+                <TableCell>{vehicle.modelo}</TableCell>
+                <TableCell>{vehicle.fabricante}</TableCell>
+                <TableCell>{vehicle.ano}</TableCell>
+                <TableCell>{formatPrice(vehicle.preco)}</TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2">
-                    {vehicle.status === "Ativo" ? (
+                    {vehicle.status === "ATIVO" ? (
                       <>
                         <CheckCircle2 className="h-4 w-4 text-success" />
                         <span className="text-success">Ativo</span>

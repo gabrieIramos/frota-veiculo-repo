@@ -1,11 +1,13 @@
-/// <reference types="vite/client" />
-
-import { useState, useEffect } from "react";
-import { toast } from "sonner";
+import { useState } from "react";
 import {
   Car,
+  LayoutDashboard,
+  Settings,
+  Users,
+  FileText,
   Plus,
   Search,
+  Wrench,
   LogOut,
   ChevronDown,
   List,
@@ -37,8 +39,6 @@ import { Input } from "./components/ui/input";
 import { VehicleTable, Vehicle } from "./components/VehicleTable";
 import { VehicleCard } from "./components/VehicleCard";
 import { VehicleFormModal } from "./components/VehicleFormModal";
-import { LoginForm } from "./components/LoginForm";
-import { RegisterForm } from "./components/RegisterForm";
 import { VehicleFilters } from "./components/VehicleFilters";
 import {
   AlertDialog,
@@ -50,8 +50,55 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "./components/ui/alert-dialog";
+import { LoginForm } from "./components/LoginForm";
+import { RegisterForm } from "./components/RegisterForm";
+
+// Mock data
+const initialVehicles: Vehicle[] = [
+  {
+    id: "1",
+    plate: "ABC-1234",
+    type: "Carro",
+    model: "Civic",
+    manufacturer: "Honda",
+    year: 2022,
+    price: 125000,
+    status: "Ativo",
+  },
+  {
+    id: "2",
+    plate: "XYZ-5678",
+    type: "Moto",
+    model: "CG 160",
+    manufacturer: "Honda",
+    year: 2023,
+    price: 15000,
+    status: "Ativo",
+  },
+  {
+    id: "3",
+    plate: "DEF-9012",
+    type: "Carro",
+    model: "Corolla",
+    manufacturer: "Toyota",
+    year: 2021,
+    price: 110000,
+    status: "Inativo",
+  },
+  {
+    id: "4",
+    plate: "GHI-3456",
+    type: "Moto",
+    model: "Ninja 400",
+    manufacturer: "Kawasaki",
+    year: 2024,
+    price: 35000,
+    status: "Ativo",
+  },
+];
 
 const menuItems = [
+  { icon: LayoutDashboard, label: "Dashboard", active: false, hasSubmenu: false },
   {
     icon: Car,
     label: "Gestão de Frotas",
@@ -59,12 +106,19 @@ const menuItems = [
     hasSubmenu: true,
     submenu: [
       { icon: List, label: "Veículos Cadastrados", active: true },
-    ]
+      { icon: Plus, label: "Cadastrar Novo", active: false },
+    ],
   },
 ];
 
 export default function App() {
-  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [currentView, setCurrentView] = useState<"login" | "register">("login");
+  const [currentUser, setCurrentUser] = useState<{
+    name: string;
+    email: string;
+  } | null>(null);
+  const [vehicles, setVehicles] = useState<Vehicle[]>(initialVehicles);
   const [searchTerm, setSearchTerm] = useState("");
   const [filters, setFilters] = useState({
     type: "all",
@@ -76,118 +130,24 @@ export default function App() {
   const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [vehicleToDelete, setVehicleToDelete] = useState<string | null>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [currentView, setCurrentView] = useState<"login" | "register">("login");
-  const [currentUser, setCurrentUser] = useState<{ usuarioId: number; nome: string; email: string; empresa: string } | null>(null);
 
-  const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
-
-  const fetchVehicles = async () => {
-    if (!currentUser) return;
-    
-    try {
-      const res = await fetch(`${BACKEND_URL}/api/veiculos?usuarioId=${currentUser.usuarioId}`);
-      if (!res.ok) throw new Error("Erro ao buscar veículos");
-      const data = await res.json();
-      
-      // Mapear dados do backend para o formato do frontend
-      const mappedVehicles: Vehicle[] = data.map((v: any) => ({
-        id: v.id.toString(),
-        modelo: v.modelo,
-        fabricante: v.fabricante,
-        ano: v.ano,
-        preco: v.preco,
-        status: v.status,
-        tipoVeiculo: v.tipoVeiculo,
-        quantidadePortas: v.quantidadePortas,
-        tipoCombustivel: v.tipoCombustivel,
-        cilindrada: v.cilindrada,
-      }));
-      
-      setVehicles(mappedVehicles);
-    } catch (err: any) {
-      console.error(err);
-      toast.error(err.message || "Erro ao buscar veículos");
+  const handleAddVehicle = (
+    vehicleData: Omit<Vehicle, "id"> & { id?: string }
+  ) => {
+    if (vehicleData.id) {
+      setVehicles(
+        vehicles.map((v) =>
+          v.id === vehicleData.id ? (vehicleData as Vehicle) : v
+        )
+      );
+    } else {
+      const newVehicle: Vehicle = {
+        ...vehicleData,
+        id: Date.now().toString(),
+      };
+      setVehicles([...vehicles, newVehicle]);
     }
-  };
-
-  useEffect(() => {
-    if (!BACKEND_URL) {
-      console.error("VITE_BACKEND_URL não definido");
-      return;
-    }
-    if (isAuthenticated && currentUser) {
-      fetchVehicles();
-    }
-  }, [BACKEND_URL, isAuthenticated, currentUser]);
-
-
-  const handleAddVehicle = async (vehicleData: any) => {
-    if (!currentUser) return;
-
-    const endpoint = vehicleData.tipoVeiculo === "CARRO" 
-      ? `${BACKEND_URL}/api/veiculos/carros` 
-      : `${BACKEND_URL}/api/veiculos/motos`;
-
-    const payload = vehicleData.tipoVeiculo === "CARRO" 
-      ? {
-          modelo: vehicleData.modelo,
-          fabricante: vehicleData.fabricante,
-          ano: vehicleData.ano,
-          preco: vehicleData.preco,
-          usuarioId: currentUser.usuarioId,
-          status: vehicleData.status,
-          quantidadePortas: vehicleData.quantidadePortas,
-          tipoCombustivel: vehicleData.tipoCombustivel
-        }
-      : {
-          modelo: vehicleData.modelo,
-          fabricante: vehicleData.fabricante,
-          ano: vehicleData.ano,
-          preco: vehicleData.preco,
-          usuarioId: currentUser.usuarioId,
-          status: vehicleData.status,
-          cilindrada: vehicleData.cilindrada
-        };
-
-    try {
-      if (vehicleData.id) {
-        // Atualizar
-        const updateEndpoint = vehicleData.tipoVeiculo === "CARRO"
-          ? `${BACKEND_URL}/api/veiculos/carros/${vehicleData.id}`
-          : `${BACKEND_URL}/api/veiculos/motos/${vehicleData.id}`;
-        
-        const res = await fetch(updateEndpoint, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-
-        if (!res.ok) {
-          const errorData = await res.json();
-          throw new Error(errorData.erro || "Erro ao atualizar veículo");
-        }
-      } else {
-        // Criar
-        const res = await fetch(endpoint, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-
-        if (!res.ok) {
-          const errorData = await res.json();
-          throw new Error(errorData.erro || "Erro ao cadastrar veículo");
-        }
-      }
-
-      await fetchVehicles();
-      setEditingVehicle(null);
-      toast.success(vehicleData.id ? "Veículo atualizado com sucesso!" : "Veículo cadastrado com sucesso!");
-    } catch (err: any) {
-      console.error(err);
-      toast.error(err.message || "Erro ao salvar veículo");
-    }
+    setEditingVehicle(null);
   };
 
   const handleEdit = (vehicle: Vehicle) => {
@@ -200,27 +160,12 @@ export default function App() {
     setDeleteDialogOpen(true);
   };
 
-  const handleDeleteConfirm = async () => {
-    if (!vehicleToDelete) return;
-
-    try {
-      const res = await fetch(`${BACKEND_URL}/api/veiculos/${vehicleToDelete}`, {
-        method: "DELETE",
-      });
-
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.erro || "Erro ao deletar veículo");
-      }
-      
-      await fetchVehicles();
+  const handleDeleteConfirm = () => {
+    if (vehicleToDelete) {
+      setVehicles(vehicles.filter((v) => v.id !== vehicleToDelete));
       setVehicleToDelete(null);
-      setDeleteDialogOpen(false);
-      toast.success("Veículo deletado com sucesso!");
-    } catch (err: any) {
-      console.error(err);
-      toast.error(err.message || "Erro ao deletar veículo");
     }
+    setDeleteDialogOpen(false);
   };
 
   const handleClearFilters = () => {
@@ -234,23 +179,24 @@ export default function App() {
 
   const filteredVehicles = vehicles.filter((vehicle) => {
     const matchesSearch =
-      vehicle.modelo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      vehicle.fabricante?.toLowerCase().includes(searchTerm.toLowerCase());
+      vehicle.plate.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      vehicle.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      vehicle.manufacturer.toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesType =
-      filters.type === "all" || vehicle.tipoVeiculo === filters.type;
+      filters.type === "all" || vehicle.type === filters.type;
 
     const matchesManufacturer =
       !filters.manufacturer ||
-      vehicle.fabricante
-        ?.toLowerCase()
+      vehicle.manufacturer
+        .toLowerCase()
         .includes(filters.manufacturer.toLowerCase());
 
     const matchesYearFrom =
-      !filters.yearFrom || vehicle.ano >= parseInt(filters.yearFrom);
+      !filters.yearFrom || vehicle.year >= parseInt(filters.yearFrom);
 
     const matchesYearTo =
-      !filters.yearTo || vehicle.ano <= parseInt(filters.yearTo);
+      !filters.yearTo || vehicle.year <= parseInt(filters.yearTo);
 
     return (
       matchesSearch &&
@@ -261,72 +207,37 @@ export default function App() {
     );
   });
 
-  const handleLogin = async (email: string, password: string) => {
-    try {
-      const res = await fetch(`${BACKEND_URL}/api/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, senha: password }),
-      });
-
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.erro || "Email ou senha inválidos");
-      }
-
-      const data = await res.json();
-      setCurrentUser({
-        usuarioId: data.usuarioId,
-        nome: data.nome,
-        email: data.email,
-        empresa: data.empresa,
-      });
-      setIsAuthenticated(true);
-      toast.success(data.mensagem || "Login realizado com sucesso!");
-    } catch (err: any) {
-      console.error(err);
-      toast.error(err.message || "Erro ao fazer login");
-    }
+  const handleLogin = (email: string, password: string) => {
+    // TODO: Integrar com backend real
+    // Por enquanto, simulando login bem-sucedido
+    setCurrentUser({
+      name: "Usuário Admin",
+      email: email,
+    });
+    setIsAuthenticated(true);
+    console.log("Login:", { email, password });
   };
 
-  const handleRegister = async (
+  const handleRegister = (
     name: string,
     email: string,
     password: string,
     company: string
   ) => {
-    try {
-      const res = await fetch(`${BACKEND_URL}/api/auth/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nome: name, email, senha: password, empresa: company }),
-      });
-
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.erro || "Erro ao cadastrar");
-      }
-
-      const data = await res.json();
-      setCurrentUser({
-        usuarioId: data.usuarioId,
-        nome: data.nome,
-        email: data.email,
-        empresa: data.empresa,
-      });
-      setIsAuthenticated(true);
-      toast.success(data.mensagem || "Cadastro realizado com sucesso!");
-    } catch (err: any) {
-      console.error(err);
-      toast.error(err.message || "Erro ao cadastrar");
-    }
+    // TODO: Integrar com backend real
+    // Por enquanto, simulando cadastro bem-sucedido e fazendo login automático
+    setCurrentUser({
+      name: name,
+      email: email,
+    });
+    setIsAuthenticated(true);
+    console.log("Register:", { name, email, password, company });
   };
 
   const handleLogout = () => {
     setIsAuthenticated(false);
     setCurrentUser(null);
     setCurrentView("login");
-    setVehicles([]);
   };
 
   // Se não estiver autenticado, mostrar telas de login/cadastro
@@ -348,6 +259,7 @@ export default function App() {
     }
   }
 
+  // Se autenticado, mostrar dashboard
   return (
     <SidebarProvider>
       <div className="flex min-h-screen w-full">
@@ -422,10 +334,10 @@ export default function App() {
             <div className="space-y-3">
               <div className="flex items-center gap-3 px-2">
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
-                  <span>{currentUser?.nome?.substring(0, 2).toUpperCase() || "UA"}</span>
+                  <span>{currentUser?.name?.substring(0, 2).toUpperCase() || "UA"}</span>
                 </div>
                 <div className="flex-1">
-                  <p className="text-sm">{currentUser?.nome || "Usuário Admin"}</p>
+                  <p className="text-sm">{currentUser?.name || "Usuário Admin"}</p>
                   <p className="text-xs text-muted-foreground">{currentUser?.email || "admin@fleet.com"}</p>
                 </div>
               </div>
@@ -473,7 +385,7 @@ export default function App() {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
-                  placeholder="Buscar por modelo ou fabricante..."
+                  placeholder="Buscar por placa, modelo ou fabricante..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-9"

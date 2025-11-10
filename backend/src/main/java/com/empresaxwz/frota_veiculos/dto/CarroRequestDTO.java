@@ -17,7 +17,7 @@ public class CarroRequestDTO extends VeiculoRequestDTO {
 
     @NotNull(message = "Quantidade de portas é obrigatória.")
     @Min(value = 1, message = "Carro deve ter pelo menos uma porta.")
-    @Max(value = 100, message = "A quantidade de portas deve ser inferior a 100")
+    @Max(value = 8, message = "A quantidade de portas não pode ser superior a 8")
     private Integer quantidadePortas;
 
     @NotNull(message = "Tipo de combustível é obrigatório.")

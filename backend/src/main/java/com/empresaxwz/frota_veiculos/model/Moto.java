@@ -12,13 +12,13 @@ import lombok.ToString;
 public class Moto extends Veiculo {
     private int cilindrada;
 
-    public Moto(Integer id, String modelo, String fabricante, int ano, double preco, int cilindrada) {
-        super(id, modelo, fabricante, ano, preco);
+    public Moto(Integer id, String modelo, String fabricante, int ano, double preco, Integer usuarioId, String status, int cilindrada) {
+        super(id, modelo, fabricante, ano, preco, usuarioId, status);
         this.cilindrada = cilindrada;
     }
 
-    public Moto(String modelo, String fabricante, int ano, double preco, int cilindrada) {
-        super(modelo, fabricante, ano, preco);
+    public Moto(String modelo, String fabricante, int ano, double preco, Integer usuarioId, String status, int cilindrada) {
+        super(modelo, fabricante, ano, preco, usuarioId, status);
         this.cilindrada = cilindrada;
     }
 }

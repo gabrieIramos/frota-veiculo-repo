@@ -28,8 +28,17 @@ public class VeiculoService {
         int AnoMax = Year.now().getValue();
         AnoMax += 1;
 
-        if (ano < 1850 || ano > AnoMax){
-            throw new IllegalArgumentException("Ano do veiculo invalido. O ano deve estar entre 1850 e " + AnoMax );
+        if (ano < 1900 || ano > AnoMax){
+            throw new IllegalArgumentException("Ano do veiculo invalido. O ano deve estar entre 1900 e " + AnoMax );
+        }
+    }
+
+    private void validarStatus(String status) {
+        if (status == null || status.trim().isEmpty()) {
+            throw new IllegalArgumentException("Status do veículo é obrigatório.");
+        }
+        if (!status.equals("ATIVO") && !status.equals("INATIVO")) {
+            throw new IllegalArgumentException("Status deve ser ATIVO ou INATIVO.");
         }
     }
 
@@ -37,6 +46,7 @@ public class VeiculoService {
     public Veiculo cadastrarVeiculo(Veiculo veiculo) {
 
         ValidarAnoVeiculo(veiculo.getAno());
+        validarStatus(veiculo.getStatus());
 
         if (veiculo.getPreco() <= 0) {
             throw new IllegalArgumentException("Preço do veículo deve ser positivo.");
@@ -47,9 +57,15 @@ public class VeiculoService {
         if (veiculo.getModelo() == null || veiculo.getModelo().trim().isEmpty()) {
             throw new IllegalArgumentException("Modelo do veículo é obrigatório.");
         }
+        if (veiculo.getUsuarioId() == null) {
+            throw new IllegalArgumentException("Usuário do veículo é obrigatório.");
+        }
         if (veiculo instanceof Carro carro) {
             if (carro.getQuantidade_portas() <= 0) {
                 throw new IllegalArgumentException("Carro deve ter pelo menos uma porta.");
+            }
+            if (carro.getQuantidade_portas() > 8) {
+                throw new IllegalArgumentException("Carro não pode ter mais de 8 portas.");
             }
             if (carro.getTipoCombustivel() == null) {
                 throw new IllegalArgumentException("Tipo de combustível do carro é obrigatório.");
@@ -68,6 +84,10 @@ public class VeiculoService {
         return veiculoRepository.findAll();
     }
 
+    public List<Veiculo> listarVeiculosPorUsuario(Integer usuarioId) {
+        return veiculoRepository.findByUsuarioId(usuarioId);
+    }
+
     public Optional<Veiculo> consultarVeiculoPorId(Integer id) {
         return veiculoRepository.findById(id);
     }
@@ -79,6 +99,7 @@ public class VeiculoService {
             throw new IllegalArgumentException("Veículo com ID " + id + " não encontrado para atualização.");
         }
         ValidarAnoVeiculo(veiculoAtualizado.getAno());
+        validarStatus(veiculoAtualizado.getStatus());
 
         if (veiculoAtualizado.getPreco() <= 0) {
             throw new IllegalArgumentException("Preço do veículo deve ser positivo.");
@@ -92,6 +113,9 @@ public class VeiculoService {
         if (veiculoAtualizado instanceof Carro carro) {
             if (carro.getQuantidade_portas() <= 0) {
                 throw new IllegalArgumentException("Carro deve ter pelo menos uma porta.");
+            }
+            if (carro.getQuantidade_portas() > 8) {
+                throw new IllegalArgumentException("Carro não pode ter mais de 8 portas.");
             }
             if (carro.getTipoCombustivel() == null) {
                 throw new IllegalArgumentException("Tipo de combustível do carro é obrigatório.");
