@@ -9,6 +9,7 @@ import {
   LogOut,
   ChevronDown,
   List,
+  LayoutDashboard,
 } from "lucide-react";
 import {
   Sidebar,
@@ -54,14 +55,21 @@ import {
 
 const menuItems = [
   {
+    key: "dashboard",
+    icon: LayoutDashboard,
+    label: "Dashboard",
+    active: false,
+    hasSubmenu: false,
+  },
+  {
+    key: "gestao",
     icon: Car,
     label: "Gestão de Frotas",
     active: true,
     hasSubmenu: true,
     submenu: [
       { key: "veiculos", icon: List, label: "Veículos Cadastrados" },
-      { key: "dashboard", icon: List, label: "Dashboard" },
-    ]
+    ],
   },
 ];
 
@@ -378,17 +386,17 @@ export default function App() {
                         defaultOpen={item.active}
                         className="group/collapsible"
                       >
-                        <SidebarMenuItem>
-                          <CollapsibleTrigger asChild>
-                            <SidebarMenuButton
-                              isActive={item.active}
-                              tooltip={item.label}
-                            >
-                              <item.icon className="h-4 w-4" />
-                              <span>{item.label}</span>
-                              <ChevronDown className="ml-auto h-4 w-4 transition-transform group-data-[state=open]/collapsible:rotate-180" />
-                            </SidebarMenuButton>
-                          </CollapsibleTrigger>
+                            <SidebarMenuItem>
+                              <CollapsibleTrigger asChild>
+                                <SidebarMenuButton
+                                  isActive={item.submenu?.some((s: any) => s.key === activeView)}
+                                  tooltip={item.label}
+                                >
+                                  <item.icon className="h-4 w-4" />
+                                  <span>{item.label}</span>
+                                  <ChevronDown className="ml-auto h-4 w-4 transition-transform group-data-[state=open]/collapsible:rotate-180" />
+                                </SidebarMenuButton>
+                              </CollapsibleTrigger>
                           <CollapsibleContent>
                             <SidebarMenuSub>
                                           {item.submenu?.map((subItem) => (
@@ -407,15 +415,16 @@ export default function App() {
                         </SidebarMenuItem>
                       </Collapsible>
                     ) : (
-                      <SidebarMenuItem key={item.label}>
-                        <SidebarMenuButton
-                          isActive={item.active}
-                          tooltip={item.label}
-                        >
-                          <item.icon className="h-4 w-4" />
-                          <span>{item.label}</span>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
+                        <SidebarMenuItem key={item.label}>
+                          <SidebarMenuButton
+                            isActive={(item as any).key === activeView}
+                            tooltip={item.label}
+                            onClick={() => setActiveView((item as any).key)}
+                          >
+                            <item.icon className="h-4 w-4" />
+                            <span>{item.label}</span>
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
                     )
                   ))}
                 </SidebarMenu>
