@@ -40,6 +40,7 @@ import { VehicleFormModal } from "./components/VehicleFormModal";
 import { LoginForm } from "./components/LoginForm";
 import { RegisterForm } from "./components/RegisterForm";
 import { VehicleFilters } from "./components/VehicleFilters";
+import { Dashboard } from "./components/Dashboard";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -58,7 +59,8 @@ const menuItems = [
     active: true,
     hasSubmenu: true,
     submenu: [
-      { icon: List, label: "Veículos Cadastrados", active: true },
+      { key: "veiculos", icon: List, label: "Veículos Cadastrados" },
+      { key: "dashboard", icon: List, label: "Dashboard" },
     ]
   },
 ];
@@ -79,6 +81,7 @@ export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentView, setCurrentView] = useState<"login" | "register">("login");
   const [currentUser, setCurrentUser] = useState<{ usuarioId: number; nome: string; email: string; empresa: string } | null>(null);
+  const [activeView, setActiveView] = useState<"veiculos" | "dashboard">("veiculos");
 
   const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
@@ -388,16 +391,17 @@ export default function App() {
                           </CollapsibleTrigger>
                           <CollapsibleContent>
                             <SidebarMenuSub>
-                              {item.submenu?.map((subItem) => (
-                                <SidebarMenuSubItem key={subItem.label}>
-                                  <SidebarMenuSubButton
-                                    isActive={subItem.active}
-                                  >
-                                    <subItem.icon className="h-4 w-4" />
-                                    <span>{subItem.label}</span>
-                                  </SidebarMenuSubButton>
-                                </SidebarMenuSubItem>
-                              ))}
+                                          {item.submenu?.map((subItem) => (
+                                            <SidebarMenuSubItem key={subItem.label}>
+                                              <SidebarMenuSubButton
+                                                isActive={subItem.key === activeView}
+                                                onClick={() => setActiveView((subItem as any).key)}
+                                              >
+                                                <subItem.icon className="h-4 w-4" />
+                                                <span>{subItem.label}</span>
+                                              </SidebarMenuSubButton>
+                                            </SidebarMenuSubItem>
+                                          ))}
                             </SidebarMenuSub>
                           </CollapsibleContent>
                         </SidebarMenuItem>
@@ -450,78 +454,93 @@ export default function App() {
           </div>
 
           <div className="p-6 space-y-6">
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            {activeView === "dashboard" ? (
               <div>
-                <h1>Gestão de Veículos</h1>
-                <p className="text-muted-foreground">
-                  Gerencie sua frota de carros e motos
-                </p>
-              </div>
-              <Button
-                onClick={() => {
-                  setEditingVehicle(null);
-                  setIsModalOpen(true);
-                }}
-                className="gap-2"
-              >
-                <Plus className="h-4 w-4" />
-                Cadastrar Novo Veículo
-              </Button>
-            </div>
-
-            <div className="flex flex-col gap-4">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  placeholder="Buscar por modelo ou fabricante..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-9"
-                />
-              </div>
-
-              <VehicleFilters
-                filters={filters}
-                onFilterChange={setFilters}
-                onClearFilters={handleClearFilters}
-              />
-            </div>
-
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <p className="text-muted-foreground">
-                  {filteredVehicles.length}{" "}
-                  {filteredVehicles.length === 1 ? "veículo encontrado" : "veículos encontrados"}
-                </p>
-              </div>
-
-              {/* Desktop Table View */}
-              <div className="hidden md:block">
-                <VehicleTable
-                  vehicles={filteredVehicles}
-                  onEdit={handleEdit}
-                  onDelete={handleDeleteClick}
-                />
-              </div>
-
-              {/* Mobile Card View */}
-              <div className="md:hidden space-y-3">
-                {filteredVehicles.length === 0 ? (
-                  <div className="rounded-lg border bg-card p-8 text-center text-muted-foreground">
-                    Nenhum veículo cadastrado. Clique em "Cadastrar Novo Veículo" para começar.
+                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <h1>Dashboard</h1>
+                    <p className="text-muted-foreground">Visão geral da sua frota</p>
                   </div>
-                ) : (
-                  filteredVehicles.map((vehicle) => (
-                    <VehicleCard
-                      key={vehicle.id}
-                      vehicle={vehicle}
+                </div>
+
+                <Dashboard vehicles={vehicles} />
+              </div>
+            ) : (
+              <>
+                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <h1>Gestão de Veículos</h1>
+                    <p className="text-muted-foreground">
+                      Gerencie sua frota de carros e motos
+                    </p>
+                  </div>
+                  <Button
+                    onClick={() => {
+                      setEditingVehicle(null);
+                      setIsModalOpen(true);
+                    }}
+                    className="gap-2"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Cadastrar Novo Veículo
+                  </Button>
+                </div>
+
+                <div className="flex flex-col gap-4">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      placeholder="Buscar por modelo ou fabricante..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-9"
+                    />
+                  </div>
+
+                  <VehicleFilters
+                    filters={filters}
+                    onFilterChange={setFilters}
+                    onClearFilters={handleClearFilters}
+                  />
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <p className="text-muted-foreground">
+                      {filteredVehicles.length}{" "}
+                      {filteredVehicles.length === 1 ? "veículo encontrado" : "veículos encontrados"}
+                    </p>
+                  </div>
+
+                  {/* Desktop Table View */}
+                  <div className="hidden md:block">
+                    <VehicleTable
+                      vehicles={filteredVehicles}
                       onEdit={handleEdit}
                       onDelete={handleDeleteClick}
                     />
-                  ))
-                )}
-              </div>
-            </div>
+                  </div>
+
+                  {/* Mobile Card View */}
+                  <div className="md:hidden space-y-3">
+                    {filteredVehicles.length === 0 ? (
+                      <div className="rounded-lg border bg-card p-8 text-center text-muted-foreground">
+                        Nenhum veículo cadastrado. Clique em "Cadastrar Novo Veículo" para começar.
+                      </div>
+                    ) : (
+                      filteredVehicles.map((vehicle) => (
+                        <VehicleCard
+                          key={vehicle.id}
+                          vehicle={vehicle}
+                          onEdit={handleEdit}
+                          onDelete={handleDeleteClick}
+                        />
+                      ))
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </main>
       </div>
