@@ -7,9 +7,6 @@ WORKDIR /workspace
 COPY pom.xml ./
 COPY src ./src
 
-# Baixa dependências antes do build (cache)
-RUN mvn -B dependency:go-offline
-
 # Compila o projeto
 RUN mvn -B clean package -DskipTests --no-transfer-progress
 
