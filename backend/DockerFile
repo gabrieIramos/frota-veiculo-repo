@@ -1,7 +1,8 @@
 ############################################
 # Builder stage: compila o projeto com Maven
 ############################################
-FROM maven:3.9.4-openjdk-17-slim AS builder
+## Use an existing Maven image with JDK 17 (slim)
+FROM maven:3.9.4-jdk-17-slim AS builder
 
 # Diretório de trabalho
 WORKDIR /workspace
@@ -18,7 +19,7 @@ COPY src ./src
 RUN ./mvnw -B clean package -DskipTests
 
 ############################################
-# Runtime stage: imagem leve com JRE
+#+ Runtime stage: imagem leve com JRE
 ############################################
 FROM eclipse-temurin:17-jre-jammy
 
