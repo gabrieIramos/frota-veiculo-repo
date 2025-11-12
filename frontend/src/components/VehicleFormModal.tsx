@@ -84,7 +84,7 @@ export function VehicleFormModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] max-h-[90vh] flex flex-col">
+  <DialogContent className="w-full h-full sm:h-auto sm:max-w-[500px] sm:max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>
             {editingVehicle ? "Editar Veículo" : "Cadastrar Novo Veículo"}
@@ -96,7 +96,7 @@ export function VehicleFormModal({
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
-          <div className="grid gap-4 py-4 overflow-y-auto pr-2">
+          <div className="grid gap-4 py-4 overflow-y-auto pr-2 max-h-[calc(100vh-200px)] sm:max-h-[calc(90vh-200px)]">
             <div className="grid gap-2">
               <Label htmlFor="tipoVeiculo">Tipo de Veículo</Label>
               <Select
@@ -251,7 +251,7 @@ export function VehicleFormModal({
               </Select>
             </div>
           </div>
-          <DialogFooter className="pt-4">
+          <DialogFooter className="pt-4 mt-auto bg-background">
             <Button
               type="button"
               variant="outline"

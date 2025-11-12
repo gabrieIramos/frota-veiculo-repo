@@ -22,6 +22,9 @@ interface VehicleFiltersProps {
     manufacturer: string;
     yearFrom: string;
     yearTo: string;
+    quantidadePortas?: string;
+    tipoCombustivel?: string;
+    cilindrada?: string;
   };
   onFilterChange: (filters: any) => void;
   onClearFilters: () => void;
@@ -35,7 +38,10 @@ export function VehicleFilters({
   const [isOpen, setIsOpen] = useState(false);
 
   const hasActiveFilters =
-    filters.type || filters.manufacturer || filters.yearFrom || filters.yearTo;
+    (filters.type && filters.type !== "all") ||
+    !!filters.manufacturer ||
+    !!filters.yearFrom ||
+    !!filters.yearTo;
 
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
@@ -70,7 +76,7 @@ export function VehicleFilters({
               <Label htmlFor="filter-type">Tipo de Veículo</Label>
               <Select
                 value={filters.type}
-                onValueChange={(value) =>
+                onValueChange={(value: string) =>
                   onFilterChange({ ...filters, type: value })
                 }
               >
@@ -79,8 +85,8 @@ export function VehicleFilters({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos</SelectItem>
-                  <SelectItem value="Carro">Carro</SelectItem>
-                  <SelectItem value="Moto">Moto</SelectItem>
+                  <SelectItem value="CARRO">Carro</SelectItem>
+                  <SelectItem value="MOTO">Moto</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -119,6 +125,63 @@ export function VehicleFilters({
                 }
               />
             </div>
+
+            {/* Campos específicos por tipo */}
+            {filters.type === "CARRO" && (
+              <>
+                <div className="grid gap-2">
+                  <Label htmlFor="filter-quantidade-portas">Quantidade de Portas</Label>
+                  <Input
+                    id="filter-quantidade-portas"
+                    type="number"
+                    min={1}
+                    max={8}
+                    placeholder="4"
+                    value={filters.quantidadePortas || ""}
+                    onChange={(e) =>
+                      onFilterChange({ ...filters, quantidadePortas: e.target.value })
+                    }
+                  />
+                </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="filter-tipo-combustivel">Tipo de Combustível</Label>
+                  <Select
+                    value={filters.tipoCombustivel || ""}
+                    onValueChange={(value: string) =>
+                      onFilterChange({ ...filters, tipoCombustivel: value })
+                    }
+                  >
+                    <SelectTrigger id="filter-tipo-combustivel">
+                      <SelectValue placeholder="Qualquer" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="">Qualquer</SelectItem>
+                        <SelectItem value="GASOLINA">Gasolina</SelectItem>
+                        <SelectItem value="ETANOL">Etanol</SelectItem>
+                        <SelectItem value="DIESEL">Diesel</SelectItem>
+                        <SelectItem value="FLEX">Flex</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </>
+            )}
+
+            {filters.type === "MOTO" && (
+              <div className="grid gap-2">
+                <Label htmlFor="filter-cilindrada">Cilindrada mínima (cc)</Label>
+                <Input
+                  id="filter-cilindrada"
+                  type="number"
+                  min={0}
+                  placeholder="150"
+                  value={filters.cilindrada || ""}
+                  onChange={(e) =>
+                    onFilterChange({ ...filters, cilindrada: e.target.value })
+                  }
+                />
+              </div>
+            )}
           </div>
         </div>
       </CollapsibleContent>

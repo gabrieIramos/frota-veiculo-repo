@@ -51,6 +51,23 @@ export function Dashboard({ vehicles }: DashboardProps) {
     })
   );
 
+  // Preparar ticks inteiros para o eixo Y (quantidade)
+  const maxQuantity = manufacturerChartData.reduce(
+    (max, item) => Math.max(max, Number(item.quantity || 0)),
+    0
+  );
+
+  // Se houver poucos valores, mostrar todos os inteiros (0..max). Se muitos, mostrar passos para evitar poluição.
+  let yTicks: number[] = [];
+  if (maxQuantity <= 20) {
+    yTicks = Array.from({ length: maxQuantity + 1 }, (_, i) => i);
+  } else {
+    const maxTicksDisplayed = 20;
+    const step = Math.ceil(maxQuantity / maxTicksDisplayed);
+    const ticksCount = Math.floor(maxQuantity / step) + 1;
+    yTicks = Array.from({ length: ticksCount }, (_, i) => i * step);
+  }
+
   // Cores para os gráficos
   const COLORS = ['#0891b2', '#14b8a6', '#06b6d4', '#2dd4bf', '#22d3ee'];
 
@@ -121,7 +138,7 @@ export function Dashboard({ vehicles }: DashboardProps) {
           </div>
           <div className="mt-4 text-sm text-muted-foreground">
             {totalVehicles > 0
-              ? `${((vehiclesByType['Carro'] || 0) / totalVehicles * 100).toFixed(1)}% da frota`
+              ? `${((vehiclesByType['CARRO'] || 0) / totalVehicles * 100).toFixed(1)}% da frota`
               : '0% da frota'}
           </div>
         </div>
@@ -139,7 +156,7 @@ export function Dashboard({ vehicles }: DashboardProps) {
           </div>
           <div className="mt-4 text-sm text-muted-foreground">
             {totalVehicles > 0
-              ? `${((vehiclesByType['Moto'] || 0) / totalVehicles * 100).toFixed(1)}% da frota`
+              ? `${((vehiclesByType['MOTO'] || 0) / totalVehicles * 100).toFixed(1)}% da frota`
               : '0% da frota'}
           </div>
         </div>
@@ -186,7 +203,7 @@ export function Dashboard({ vehicles }: DashboardProps) {
                 dataKey="name"
                 tick={{ fill: '#64748b', fontSize: 12 }}
               />
-              <YAxis tick={{ fill: '#64748b', fontSize: 12 }} />
+              <YAxis ticks={yTicks} tick={{ fill: '#64748b', fontSize: 12 }} />
               <Tooltip
                 contentStyle={{
                   backgroundColor: '#fff',

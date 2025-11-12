@@ -81,6 +81,9 @@ export default function App() {
     manufacturer: "",
     yearFrom: "",
     yearTo: "",
+    quantidadePortas: "",
+    tipoCombustivel: "",
+    cilindrada: "",
   });
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null);
@@ -89,7 +92,8 @@ export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentView, setCurrentView] = useState<"login" | "register">("login");
   const [currentUser, setCurrentUser] = useState<{ usuarioId: number; nome: string; email: string; empresa: string } | null>(null);
-  const [activeView, setActiveView] = useState<"veiculos" | "dashboard">("veiculos");
+  const [activeView, setActiveView] = useState<"veiculos" | "dashboard">("dashboard");
+  const [authLoading, setAuthLoading] = useState(false);
 
   const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
@@ -240,39 +244,59 @@ export default function App() {
       manufacturer: "",
       yearFrom: "",
       yearTo: "",
+      quantidadePortas: "",
+      tipoCombustivel: "",
+      cilindrada: "",
     });
   };
 
   const filteredVehicles = vehicles.filter((vehicle) => {
-    const matchesSearch =
-      vehicle.modelo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      vehicle.fabricante?.toLowerCase().includes(searchTerm.toLowerCase());
+    try {
+      const matchesSearch =
+        (vehicle.modelo?.toLowerCase()?.includes(searchTerm.toLowerCase()) ?? false) ||
+        (vehicle.fabricante?.toLowerCase()?.includes(searchTerm.toLowerCase()) ?? false);
 
-    const matchesType =
-      filters.type === "all" || vehicle.tipoVeiculo === filters.type;
+      const matchesType =
+        filters.type === "all" || (vehicle.tipoVeiculo || "").toUpperCase() === (filters.type || "").toUpperCase();
 
-    const matchesManufacturer =
-      !filters.manufacturer ||
-      vehicle.fabricante
-        ?.toLowerCase()
-        .includes(filters.manufacturer.toLowerCase());
+      const matchesManufacturer =
+        !filters.manufacturer ||
+        (vehicle.fabricante?.toLowerCase()?.includes(filters.manufacturer.toLowerCase()) ?? false);
 
-    const matchesYearFrom =
-      !filters.yearFrom || vehicle.ano >= parseInt(filters.yearFrom);
+      const matchesYearFrom =
+        !filters.yearFrom || vehicle.ano >= parseInt(filters.yearFrom);
 
-    const matchesYearTo =
-      !filters.yearTo || vehicle.ano <= parseInt(filters.yearTo);
+      const matchesYearTo =
+        !filters.yearTo || vehicle.ano <= parseInt(filters.yearTo);
 
-    return (
-      matchesSearch &&
-      matchesType &&
-      matchesManufacturer &&
-      matchesYearFrom &&
-      matchesYearTo
-    );
+      const matchesQuantidadePortas =
+        !filters.quantidadePortas ||
+        (vehicle.quantidadePortas !== undefined && vehicle.quantidadePortas === parseInt(filters.quantidadePortas));
+
+      const matchesTipoCombustivel =
+        !filters.tipoCombustivel || (vehicle.tipoCombustivel !== undefined && vehicle.tipoCombustivel === filters.tipoCombustivel);
+
+      const matchesCilindrada =
+        !filters.cilindrada || (vehicle.cilindrada !== undefined && vehicle.cilindrada >= parseInt(filters.cilindrada));
+
+      return (
+        matchesSearch &&
+        matchesType &&
+        matchesManufacturer &&
+        matchesYearFrom &&
+        matchesYearTo &&
+        matchesQuantidadePortas &&
+        matchesTipoCombustivel &&
+        matchesCilindrada
+      );
+    } catch (err) {
+      console.error("Erro ao filtrar veículos:", err);
+      return false;
+    }
   });
 
   const handleLogin = async (email: string, password: string) => {
+    setAuthLoading(true);
     try {
       const res = await fetch(`${BACKEND_URL}/api/auth/login`, {
         method: "POST",
@@ -297,6 +321,8 @@ export default function App() {
     } catch (err: any) {
       console.error(err);
       toast.error(err.message || "Erro ao fazer login");
+    } finally {
+      setAuthLoading(false);
     }
   };
 
@@ -347,6 +373,7 @@ export default function App() {
         <LoginForm
           onLogin={handleLogin}
           onNavigateToRegister={() => setCurrentView("register")}
+          loading={authLoading}
         />
       );
     } else {
@@ -465,13 +492,6 @@ export default function App() {
           <div className="p-6 space-y-6">
             {activeView === "dashboard" ? (
               <div>
-                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                  <div>
-                    <h1>Dashboard</h1>
-                    <p className="text-muted-foreground">Visão geral da sua frota</p>
-                  </div>
-                </div>
-
                 <Dashboard vehicles={vehicles} />
               </div>
             ) : (

@@ -7,11 +7,13 @@ import { Label } from "./ui/label";
 interface LoginFormProps {
   onLogin: (email: string, password: string) => void;
   onNavigateToRegister: () => void;
+  loading?: boolean;
 }
 
 export function LoginForm({
   onLogin,
   onNavigateToRegister,
+  loading = false,
 }: LoginFormProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -107,9 +109,17 @@ export function LoginForm({
             <Button
               type="submit"
               className="w-full bg-gradient-to-r from-cyan-600 to-teal-700 hover:from-cyan-700 hover:to-teal-800"
+              disabled={loading}
             >
-              <LogIn className="w-5 h-5 mr-2" />
-              Entrar
+              {loading ? (
+                <svg className="animate-spin w-5 h-5 mr-2" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                </svg>
+              ) : (
+                <LogIn className="w-5 h-5 mr-2" />
+              )}
+              {loading ? "Carregando..." : "Entrar"}
             </Button>
           </form>
 
