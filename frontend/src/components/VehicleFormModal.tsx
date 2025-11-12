@@ -36,12 +36,12 @@ export function VehicleFormModal({
     tipoVeiculo: "CARRO",
     modelo: "",
     fabricante: "",
-    ano: new Date().getFullYear(),
-    preco: 0,
-    status: "ATIVO",
-    quantidadePortas: 4,
-    tipoCombustivel: "FLEX",
-    cilindrada: 150,
+    ano: new Date().getFullYear(),  
+    preco: "",
+    status: "ATIVO",    
+    quantidadePortas: "",
+    tipoCombustivel: "GASOLINA",
+    cilindrada: "",
   });
 
   useEffect(() => {
@@ -50,12 +50,12 @@ export function VehicleFormModal({
         tipoVeiculo: editingVehicle.tipoVeiculo || "CARRO",
         modelo: editingVehicle.modelo || "",
         fabricante: editingVehicle.fabricante || "",
-        ano: editingVehicle.ano || new Date().getFullYear(),
-        preco: editingVehicle.preco || 0,
+        ano: editingVehicle.ano || new Date().getFullYear(),                
+        preco: editingVehicle.preco !== undefined ? String(Math.round(Number((editingVehicle as any).preco) * 100)) : "",
         status: editingVehicle.status || "ATIVO",
-        quantidadePortas: editingVehicle.quantidadePortas || 4,
-        tipoCombustivel: editingVehicle.tipoCombustivel || "FLEX",
-        cilindrada: editingVehicle.cilindrada || 150,
+        quantidadePortas: editingVehicle.quantidadePortas !== undefined ? String(editingVehicle.quantidadePortas) : "",
+        tipoCombustivel: editingVehicle.tipoCombustivel || "GASOLINA",
+        cilindrada: editingVehicle.cilindrada !== undefined ? String(editingVehicle.cilindrada) : "",
       });
     } else {
       setFormData({
@@ -63,23 +63,44 @@ export function VehicleFormModal({
         modelo: "",
         fabricante: "",
         ano: new Date().getFullYear(),
-        preco: 0,
+        preco: "",
         status: "ATIVO",
-        quantidadePortas: 4,
-        tipoCombustivel: "FLEX",
-        cilindrada: 150,
+        quantidadePortas: "",
+        tipoCombustivel: "GASOLINA",
+        cilindrada: "",
       });
     }
   }, [editingVehicle, open]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const prepared = {
+      ...formData,      
+      preco: formData.preco === "" ? 0 : (parseInt(formData.preco as any, 10) || 0) / 100,
+      quantidadePortas: formData.quantidadePortas === "" ? undefined : parseInt(formData.quantidadePortas as any),
+      cilindrada: formData.cilindrada === "" ? undefined : parseInt(formData.cilindrada as any),
+    } as any;
+
     if (editingVehicle) {
-      onSubmit({ ...formData, id: editingVehicle.id });
+      onSubmit({ ...prepared, id: editingVehicle.id });
     } else {
-      onSubmit(formData);
+      onSubmit(prepared);
     }
     onOpenChange(false);
+  };
+  
+  const parseInputToRaw = (input: string) => {
+    if (!input) return "";    
+    const digits = input.replace(/\D/g, '');
+    return digits;
+  };
+
+  const formatRawToDisplay = (raw: string) => {
+    if (!raw) return '';
+    const cents = parseInt(raw, 10) || 0;
+    const n = cents / 100;
+    if (isNaN(n)) return raw;
+    return new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
   };
 
   return (
@@ -147,7 +168,7 @@ export function VehicleFormModal({
               <Input
                 id="ano"
                 type="number"
-                min="1900"
+                min="1950"
                 max={new Date().getFullYear() + 1}
                 value={formData.ano}
                 onChange={(e) => {
@@ -162,14 +183,14 @@ export function VehicleFormModal({
               <Label htmlFor="preco">Preço (R$)</Label>
               <Input
                 id="preco"
-                type="number"
+                type="text"
                 min="0"
                 step="0.01"
-                placeholder="0.00"
-                value={formData.preco}
-                onChange={(e) => {
-                  const value = parseFloat(e.target.value);
-                  setFormData({ ...formData, preco: isNaN(value) ? 0 : value });
+                placeholder="0.00"                
+                value={formatRawToDisplay(formData.preco as string)}
+                onChange={(e) => {                  
+                  const raw = parseInputToRaw(e.target.value);
+                  setFormData({ ...formData, preco: raw });
                 }}
                 required
               />
@@ -183,11 +204,11 @@ export function VehicleFormModal({
                     id="quantidadePortas"
                     type="number"
                     min="1"
-                    max="8"
-                    value={formData.quantidadePortas}
+                    max="8"  
+                    placeholder="0"                  
+                    value={formData.quantidadePortas as any}
                     onChange={(e) => {
-                      const value = parseInt(e.target.value);
-                      setFormData({ ...formData, quantidadePortas: isNaN(value) ? 4 : value });
+                      setFormData({ ...formData, quantidadePortas: e.target.value });
                     }}
                     required
                   />
@@ -223,10 +244,9 @@ export function VehicleFormModal({
                   type="number"
                   min="1"
                   max="10000"
-                  value={formData.cilindrada}
+                  value={formData.cilindrada as any}
                   onChange={(e) => {
-                    const value = parseInt(e.target.value);
-                    setFormData({ ...formData, cilindrada: isNaN(value) ? 150 : value });
+                    setFormData({ ...formData, cilindrada: e.target.value });
                   }}
                   required
                 />
