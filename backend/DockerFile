@@ -9,7 +9,8 @@ COPY .mvn ./
 RUN chmod +x mvnw || true
 
 COPY src ./src
-RUN ./mvnw -B clean package -DskipTests
+RUN ./mvnw -B clean package -DskipTests --no-transfer-progress
+
 
 ############################################
 # Runtime stage
