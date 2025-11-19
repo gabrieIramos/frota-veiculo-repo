@@ -37,8 +37,8 @@ public class VeiculoService {
         if (status == null || status.trim().isEmpty()) {
             throw new IllegalArgumentException("Status do veículo é obrigatório.");
         }
-        if (!status.equals("ATIVO") && !status.equals("INATIVO")) {
-            throw new IllegalArgumentException("Status deve ser ATIVO ou INATIVO.");
+        if (!status.equals("DISPONÍVEL") && !status.equals("ALUGADO") && !status.equals("MANUTENÇÃO") && !status.equals("INDISPONÍVEL")) {
+            throw new IllegalArgumentException("Status deve ser DISPONÍVEL, ALUGADO, MANUTENÇÃO ou INDISPONÍVEL.");
         }
     }
 

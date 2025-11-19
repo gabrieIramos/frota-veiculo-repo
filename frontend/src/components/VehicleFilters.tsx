@@ -22,6 +22,7 @@ interface VehicleFiltersProps {
     manufacturer: string;
     yearFrom: string;
     yearTo: string;
+    status?: string;
     quantidadePortas?: string;
     tipoCombustivel?: string;
     cilindrada?: string;
@@ -41,7 +42,8 @@ export function VehicleFilters({
     (filters.type && filters.type !== "all") ||
     !!filters.manufacturer ||
     !!filters.yearFrom ||
-    !!filters.yearTo;
+    !!filters.yearTo ||
+    !!filters.status;
 
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
@@ -124,6 +126,26 @@ export function VehicleFilters({
                   onFilterChange({ ...filters, yearTo: e.target.value })
                 }
               />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="filter-status">Status</Label>
+              <Select
+                value={filters.status || ""}
+                onValueChange={(value: string) =>
+                  onFilterChange({ ...filters, status: value })
+                }
+              >
+                <SelectTrigger id="filter-status">
+                  <SelectValue placeholder="Todos" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Todos</SelectItem>
+                  <SelectItem value="DISPONÍVEL">Disponível</SelectItem>
+                  <SelectItem value="ALUGADO">Alugado</SelectItem>
+                  <SelectItem value="MANUTENÇÃO">Manutenção</SelectItem>
+                  <SelectItem value="INDISPONÍVEL">Indisponível</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Campos específicos por tipo */}

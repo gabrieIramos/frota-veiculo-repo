@@ -14,7 +14,7 @@ public abstract class Veiculo {
     private int ano;
     private double preco;
     private Integer usuarioId;
-    private String status; // ATIVO ou INATIVO
+    private String status;
 
     public Veiculo(String modelo, String fabricante, int ano, double preco, Integer usuarioId, String status) {
         this.modelo = modelo;

@@ -67,15 +67,25 @@ export function VehicleCard({ vehicle, onEdit, onDelete }: VehicleCardProps) {
           <div className="col-span-2">
             <p className="text-muted-foreground">Status</p>
             <div className="flex items-center gap-1">
-              {vehicle.status === "ATIVO" ? (
+              {vehicle.status === "DISPONÍVEL" ? (
                 <>
-                  <CheckCircle2 className="h-4 w-4 text-success" />
-                  <span className="text-success">Ativo</span>
+                  <CheckCircle2 className="h-4 w-4 text-green-600" />
+                  <span className="text-green-600">Disponível</span>
+                </>
+              ) : vehicle.status === "ALUGADO" ? (
+                <>
+                  <CheckCircle2 className="h-4 w-4 text-blue-600" />
+                  <span className="text-blue-600">Alugado</span>
+                </>
+              ) : vehicle.status === "MANUTENÇÃO" ? (
+                <>
+                  <CheckCircle2 className="h-4 w-4 text-yellow-600" />
+                  <span className="text-yellow-600">Manutenção</span>
                 </>
               ) : (
                 <>
-                  <XCircle className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-muted-foreground">Inativo</span>
+                  <XCircle className="h-4 w-4 text-red-600" />
+                  <span className="text-red-600">Indisponível</span>
                 </>
               )}
             </div>

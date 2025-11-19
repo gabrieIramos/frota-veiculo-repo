@@ -1,5 +1,7 @@
 import { Car, DollarSign, Package } from 'lucide-react';
 import { Vehicle } from './VehicleTable';
+import { Rental } from './RentalTable';
+import { Maintenance } from './MaintenanceTable';
 import {
   PieChart,
   Pie,
@@ -12,18 +14,94 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
+  LineChart,
+  Line,
 } from 'recharts';
+import { useState, useEffect } from 'react';
 
 interface DashboardProps {
   vehicles: Vehicle[];
+  currentUser: { usuarioId: number; nome: string; email: string; empresa: string } | null;
 }
 
-export function Dashboard({ vehicles }: DashboardProps) {
-  // Calcular estatísticas usando os campos vindos do backend
+export function Dashboard({ vehicles, currentUser }: DashboardProps) {
+  const [rentals, setRentals] = useState<Rental[]>([]);
+  const [maintenances, setMaintenances] = useState<Maintenance[]>([]);
+  const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+
+  useEffect(() => {
+    if (currentUser) {
+      fetch(`${BACKEND_URL}/api/alugueis?usuarioId=${currentUser.usuarioId}`)
+        .then(res => {
+          if (res.ok) {
+            return res.json();
+          }
+          return [];
+        })
+        .then(data => setRentals(data || []))
+        .catch(err => {
+          console.error(err);
+          setRentals([]);
+        });
+
+      fetch(`${BACKEND_URL}/api/manutencoes?usuarioId=${currentUser.usuarioId}`)
+        .then(res => {
+          if (res.ok) {
+            return res.json();
+          }
+          return [];
+        })
+        .then(data => setMaintenances(data || []))
+        .catch(err => {
+          console.error(err);
+          setMaintenances([]);
+        });
+    }
+  }, [currentUser, BACKEND_URL]);
+
   const totalVehicles = vehicles?.length || 0;
   const totalValue = (vehicles || []).reduce((sum, vehicle) => sum + (Number((vehicle as any).preco) || 0), 0);
-  const activeVehicles = (vehicles || []).filter((v) => v.status === 'ATIVO').length;
-  const inactiveVehicles = totalVehicles - activeVehicles;
+  
+  const vehiclesByStatus = (vehicles || []).reduce((acc, vehicle) => {
+    const status = vehicle.status || 'INDISPONÍVEL';
+    acc[status] = (acc[status] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+
+  const statusChartData = [
+    { name: 'Disponível', value: vehiclesByStatus['DISPONÍVEL'] || 0 },
+    { name: 'Alugado', value: vehiclesByStatus['ALUGADO'] || 0 },
+    { name: 'Manutenção', value: vehiclesByStatus['MANUTENÇÃO'] || 0 },
+    { name: 'Indisponível', value: vehiclesByStatus['INDISPONÍVEL'] || 0 },
+  ];
+
+  const currentMonth = new Date().getMonth();
+  const currentYear = new Date().getFullYear();
+  const monthlyRevenue = rentals
+    .filter(r => {
+      const rentalDate = new Date(r.dataRetirada);
+      return rentalDate.getMonth() === currentMonth && rentalDate.getFullYear() === currentYear;
+    })
+    .reduce((sum, r) => sum + (r.valor || 0), 0);
+
+  const vehiclesRentalCount = rentals.reduce((acc, rental) => {
+    const key = `${rental.veiculoModelo} - ${rental.veiculoFabricante}`;
+    acc[key] = (acc[key] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+
+  const mostRentedVehicles = Object.entries(vehiclesRentalCount)
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 5);
+
+  const mostExpensiveMaintenances = maintenances
+    .map(m => ({
+      name: `${m.veiculoModelo} - ${m.tipo}`,
+      valor: m.preco || 0,
+    }))
+    .sort((a, b) => b.valor - a.valor)
+    .slice(0, 5);
 
   // Dados por tipo de veículo (campo: tipoVeiculo, valores esperados: 'CARRO' ou 'MOTO')
   const vehiclesByType = (vehicles || []).reduce((acc, vehicle) => {
@@ -103,9 +181,9 @@ export function Dashboard({ vehicles }: DashboardProps) {
             </div>
           </div>
           <div className="mt-4 flex items-center gap-2 text-sm">
-            <span className="text-green-600">{activeVehicles} ativos</span>
+            <span className="text-green-600">{vehiclesByStatus['DISPONÍVEL'] || 0} disponíveis</span>
             <span className="text-muted-foreground">•</span>
-            <span className="text-red-600">{inactiveVehicles} inativos</span>
+            <span className="text-blue-600">{vehiclesByStatus['ALUGADO'] || 0} alugados</span>
           </div>
         </div>
 
@@ -164,13 +242,13 @@ export function Dashboard({ vehicles }: DashboardProps) {
 
       {/* Gráficos */}
       <div className="grid gap-6 md:grid-cols-2">
-        {/* Gráfico por Tipo */}
+        {/* Quantidade de carros por status */}
         <div className="rounded-xl border bg-card p-6 shadow-sm">
-          <h3 className="mb-4">Distribuição por Tipo</h3>
+          <h3 className="mb-4">Veículos por Status</h3>
           <ResponsiveContainer width="100%" height={300}>
             <PieChart>
               <Pie
-                data={typeChartData}
+                data={statusChartData}
                 cx="50%"
                 cy="50%"
                 labelLine={false}
@@ -181,10 +259,10 @@ export function Dashboard({ vehicles }: DashboardProps) {
                 fill="#8884d8"
                 dataKey="value"
               >
-                {typeChartData.map((entry, index) => (
+                {statusChartData.map((entry, index) => (
                   <Cell
                     key={`cell-${index}`}
-                    fill={COLORS[index % COLORS.length]}
+                    fill={['#22c55e', '#3b82f6', '#eab308', '#ef4444'][index % 4]}
                   />
                 ))}
               </Pie>
@@ -193,17 +271,31 @@ export function Dashboard({ vehicles }: DashboardProps) {
           </ResponsiveContainer>
         </div>
 
-        {/* Gráfico por Fabricante */}
+        {/* Receita total mensal */}
         <div className="rounded-xl border bg-card p-6 shadow-sm">
-          <h3 className="mb-4">Quantidade por Fabricante</h3>
+          <h3 className="mb-4">Receita Mensal</h3>
+          <div className="flex items-center justify-center h-[300px]">
+            <div className="text-center">
+              <p className="text-4xl font-bold text-primary">{formatCurrency(monthlyRevenue)}</p>
+              <p className="text-muted-foreground mt-2">Receita do mês atual</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Veículos mais alugados */}
+        <div className="rounded-xl border bg-card p-6 shadow-sm">
+          <h3 className="mb-4">Veículos Mais Alugados</h3>
           <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={manufacturerChartData}>
+            <BarChart data={mostRentedVehicles}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
               <XAxis
                 dataKey="name"
-                tick={{ fill: '#64748b', fontSize: 12 }}
+                tick={{ fill: '#64748b', fontSize: 10 }}
+                angle={-45}
+                textAnchor="end"
+                height={80}
               />
-              <YAxis ticks={yTicks} tick={{ fill: '#64748b', fontSize: 12 }} />
+              <YAxis tick={{ fill: '#64748b', fontSize: 12 }} />
               <Tooltip
                 contentStyle={{
                   backgroundColor: '#fff',
@@ -213,10 +305,43 @@ export function Dashboard({ vehicles }: DashboardProps) {
               />
               <Legend />
               <Bar
-                dataKey="quantity"
+                dataKey="count"
                 fill="#0891b2"
                 radius={[8, 8, 0, 0]}
-                name="Quantidade"
+                name="Aluguéis"
+              />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* Manutenções mais caras */}
+        <div className="rounded-xl border bg-card p-6 shadow-sm">
+          <h3 className="mb-4">Manutenções Mais Caras</h3>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={mostExpensiveMaintenances}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+              <XAxis
+                dataKey="name"
+                tick={{ fill: '#64748b', fontSize: 10 }}
+                angle={-45}
+                textAnchor="end"
+                height={80}
+              />
+              <YAxis tick={{ fill: '#64748b', fontSize: 12 }} />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: '#fff',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '8px',
+                }}
+                formatter={(value: number) => formatCurrency(value)}
+              />
+              <Legend />
+              <Bar
+                dataKey="valor"
+                fill="#ef4444"
+                radius={[8, 8, 0, 0]}
+                name="Valor"
               />
             </BarChart>
           </ResponsiveContainer>

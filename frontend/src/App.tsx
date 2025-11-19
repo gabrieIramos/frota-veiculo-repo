@@ -10,6 +10,8 @@ import {
   ChevronDown,
   List,
   LayoutDashboard,
+  Calendar,
+  Wrench,
 } from "lucide-react";
 import {
   Sidebar,
@@ -42,6 +44,8 @@ import { LoginForm } from "./components/LoginForm";
 import { RegisterForm } from "./components/RegisterForm";
 import { VehicleFilters } from "./components/VehicleFilters";
 import { Dashboard } from "./components/Dashboard";
+import { RentalManagement } from "./components/RentalManagement";
+import { MaintenanceManagement } from "./components/MaintenanceManagement";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -71,6 +75,20 @@ const menuItems = [
       { key: "veiculos", icon: List, label: "Veículos Cadastrados" },
     ],
   },
+  {
+    key: "alugueis",
+    icon: Calendar,
+    label: "Gestão de Aluguéis",
+    active: false,
+    hasSubmenu: false,
+  },
+  {
+    key: "manutencoes",
+    icon: Wrench,
+    label: "Manutenções",
+    active: false,
+    hasSubmenu: false,
+  },
 ];
 
 export default function App() {
@@ -81,6 +99,7 @@ export default function App() {
     manufacturer: "",
     yearFrom: "",
     yearTo: "",
+    status: "",
     quantidadePortas: "",
     tipoCombustivel: "",
     cilindrada: "",
@@ -92,7 +111,7 @@ export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [currentView, setCurrentView] = useState<"login" | "register">("login");
   const [currentUser, setCurrentUser] = useState<{ usuarioId: number; nome: string; email: string; empresa: string } | null>(null);
-  const [activeView, setActiveView] = useState<"veiculos" | "dashboard">("dashboard");
+  const [activeView, setActiveView] = useState<"veiculos" | "dashboard" | "alugueis" | "manutencoes">("dashboard");
   const [authLoading, setAuthLoading] = useState(false);
 
   const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
@@ -244,6 +263,7 @@ export default function App() {
       manufacturer: "",
       yearFrom: "",
       yearTo: "",
+      status: "",
       quantidadePortas: "",
       tipoCombustivel: "",
       cilindrada: "",
@@ -269,6 +289,9 @@ export default function App() {
       const matchesYearTo =
         !filters.yearTo || vehicle.ano <= parseInt(filters.yearTo);
 
+      const matchesStatus =
+        !filters.status || vehicle.status === filters.status;
+
       const matchesQuantidadePortas =
         !filters.quantidadePortas ||
         (vehicle.quantidadePortas !== undefined && vehicle.quantidadePortas === parseInt(filters.quantidadePortas));
@@ -285,6 +308,7 @@ export default function App() {
         matchesManufacturer &&
         matchesYearFrom &&
         matchesYearTo &&
+        matchesStatus &&
         matchesQuantidadePortas &&
         matchesTipoCombustivel &&
         matchesCilindrada
@@ -492,8 +516,12 @@ export default function App() {
           <div className="p-6 space-y-6">
             {activeView === "dashboard" ? (
               <div>
-                <Dashboard vehicles={vehicles} />
+                <Dashboard vehicles={vehicles} currentUser={currentUser} />
               </div>
+            ) : activeView === "alugueis" ? (
+              <RentalManagement currentUser={currentUser} vehicles={vehicles} onVehiclesUpdate={fetchVehicles} />
+            ) : activeView === "manutencoes" ? (
+              <MaintenanceManagement currentUser={currentUser} vehicles={vehicles} onVehiclesUpdate={fetchVehicles} />
             ) : (
               <>
                 <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">

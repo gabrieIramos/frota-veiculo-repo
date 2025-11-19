@@ -38,7 +38,7 @@ export function VehicleFormModal({
     fabricante: "",
     ano: new Date().getFullYear(),  
     preco: "",
-    status: "ATIVO",    
+    status: "DISPONÍVEL",    
     quantidadePortas: "",
     tipoCombustivel: "GASOLINA",
     cilindrada: "",
@@ -52,7 +52,7 @@ export function VehicleFormModal({
         fabricante: editingVehicle.fabricante || "",
         ano: editingVehicle.ano || new Date().getFullYear(),                
         preco: editingVehicle.preco !== undefined ? String(Math.round(Number((editingVehicle as any).preco) * 100)) : "",
-        status: editingVehicle.status || "ATIVO",
+        status: editingVehicle.status || "DISPONÍVEL",
         quantidadePortas: editingVehicle.quantidadePortas !== undefined ? String(editingVehicle.quantidadePortas) : "",
         tipoCombustivel: editingVehicle.tipoCombustivel || "GASOLINA",
         cilindrada: editingVehicle.cilindrada !== undefined ? String(editingVehicle.cilindrada) : "",
@@ -64,7 +64,7 @@ export function VehicleFormModal({
         fabricante: "",
         ano: new Date().getFullYear(),
         preco: "",
-        status: "ATIVO",
+        status: "DISPONÍVEL",
         quantidadePortas: "",
         tipoCombustivel: "GASOLINA",
         cilindrada: "",
@@ -265,8 +265,10 @@ export function VehicleFormModal({
                   <SelectValue placeholder="Selecione o status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="ATIVO">Ativo</SelectItem>
-                  <SelectItem value="INATIVO">Inativo</SelectItem>
+                  <SelectItem value="DISPONÍVEL">Disponível</SelectItem>
+                  <SelectItem value="ALUGADO">Alugado</SelectItem>
+                  <SelectItem value="MANUTENÇÃO">Manutenção</SelectItem>
+                  <SelectItem value="INDISPONÍVEL">Indisponível</SelectItem>
                 </SelectContent>
               </Select>
             </div>

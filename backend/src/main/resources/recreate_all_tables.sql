@@ -59,3 +59,4 @@ CREATE TABLE manutencoes (
     status VARCHAR(20) NOT NULL DEFAULT 'EM_ANDAMENTO' CHECK (status IN ('EM_ANDAMENTO', 'FINALIZADA')),
     usuario_id INT NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE
 );
+
