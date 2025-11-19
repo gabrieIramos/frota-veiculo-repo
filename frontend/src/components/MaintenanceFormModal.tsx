@@ -24,9 +24,10 @@ import { Vehicle } from "./VehicleTable";
 interface MaintenanceFormModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (maintenance: any) => void;
+  onSubmit: (maintenance: any) => Promise<void>;
   editingMaintenance?: Maintenance | null;
   vehicles: Vehicle[];
+  loading?: boolean;
 }
 
 export function MaintenanceFormModal({
@@ -35,6 +36,7 @@ export function MaintenanceFormModal({
   onSubmit,
   editingMaintenance,
   vehicles,
+  loading = false,
 }: MaintenanceFormModalProps) {
   const [formData, setFormData] = useState({
     veiculoId: "",
@@ -73,24 +75,34 @@ export function MaintenanceFormModal({
     }
   }, [editingMaintenance, open]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (loading) return;
+
     const prepared = {
       ...formData,
       veiculoId: parseInt(formData.veiculoId),
       preco: parseFloat(formData.preco),
     } as any;
 
-    if (editingMaintenance) {
-      onSubmit({ ...prepared, id: editingMaintenance.id });
-    } else {
-      onSubmit(prepared);
+    try {
+      if (editingMaintenance) {
+        await onSubmit({ ...prepared, id: editingMaintenance.id });
+      } else {
+        await onSubmit(prepared);
+      }
+    } catch (err) {
+      console.error("Erro ao submeter formulário:", err);
     }
-    onOpenChange(false);
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(open) => {
+      if (!loading) {
+        onOpenChange(open);
+      }
+    }}>
       <DialogContent className="w-full h-full sm:h-auto sm:max-w-[500px] sm:max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>
@@ -234,11 +246,12 @@ export function MaintenanceFormModal({
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}
+              disabled={loading}
             >
               Cancelar
             </Button>
-            <Button type="submit">
-              {editingMaintenance ? "Atualizar" : "Cadastrar"}
+            <Button type="submit" disabled={loading}>
+              {loading ? "Salvando..." : editingMaintenance ? "Atualizar" : "Cadastrar"}
             </Button>
           </DialogFooter>
         </form>

@@ -84,6 +84,27 @@ export function Dashboard({ vehicles, currentUser }: DashboardProps) {
     })
     .reduce((sum, r) => sum + (r.valor || 0), 0);
 
+  const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+  const last12Months = Array.from({ length: 12 }, (_, i) => {
+    const date = new Date();
+    date.setMonth(date.getMonth() - (11 - i));
+    return {
+      month: date.getMonth(),
+      year: date.getFullYear(),
+      name: monthNames[date.getMonth()] + '/' + date.getFullYear().toString().slice(-2),
+    };
+  });
+
+  const monthlyRevenueData = last12Months.map(({ month, year, name }) => {
+    const revenue = rentals
+      .filter(r => {
+        const rentalDate = new Date(r.dataRetirada);
+        return rentalDate.getMonth() === month && rentalDate.getFullYear() === year;
+      })
+      .reduce((sum, r) => sum + (r.valor || 0), 0);
+    return { name, receita: revenue };
+  });
+
   const vehiclesRentalCount = rentals.reduce((acc, rental) => {
     const key = `${rental.veiculoModelo} - ${rental.veiculoFabricante}`;
     acc[key] = (acc[key] || 0) + 1;
@@ -273,13 +294,29 @@ export function Dashboard({ vehicles, currentUser }: DashboardProps) {
 
         {/* Receita total mensal */}
         <div className="rounded-xl border bg-card p-6 shadow-sm">
-          <h3 className="mb-4">Receita Mensal</h3>
-          <div className="flex items-center justify-center h-[300px]">
-            <div className="text-center">
-              <p className="text-4xl font-bold text-primary">{formatCurrency(monthlyRevenue)}</p>
-              <p className="text-muted-foreground mt-2">Receita do mês atual</p>
-            </div>
-          </div>
+          <h3 className="mb-4">Receita Mensal (Últimos 12 meses)</h3>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={monthlyRevenueData}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis 
+                dataKey="name" 
+                angle={-45}
+                textAnchor="end"
+                height={80}
+                tick={{ fontSize: 12 }}
+              />
+              <YAxis 
+                tickFormatter={(value) => `R$ ${(value / 1000).toFixed(0)}k`}
+                tick={{ fontSize: 12 }}
+              />
+              <Tooltip 
+                formatter={(value: number) => formatCurrency(value)}
+                labelStyle={{ color: '#000' }}
+              />
+              <Legend />
+              <Bar dataKey="receita" fill="#22c55e" name="Receita" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
         </div>
 
         {/* Veículos mais alugados */}

@@ -113,6 +113,7 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState<{ usuarioId: number; nome: string; email: string; empresa: string } | null>(null);
   const [activeView, setActiveView] = useState<"veiculos" | "dashboard" | "alugueis" | "manutencoes">("dashboard");
   const [authLoading, setAuthLoading] = useState(false);
+  const [vehicleLoading, setVehicleLoading] = useState(false);
 
   const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
@@ -157,7 +158,7 @@ export default function App() {
 
 
   const handleAddVehicle = async (vehicleData: any) => {
-    if (!currentUser) return;
+    if (!currentUser || vehicleLoading) return;
 
     const endpoint = vehicleData.tipoVeiculo === "CARRO" 
       ? `${BACKEND_URL}/api/veiculos/carros` 
@@ -184,9 +185,9 @@ export default function App() {
           cilindrada: vehicleData.cilindrada
         };
 
+    setVehicleLoading(true);
     try {
       if (vehicleData.id) {
-        // Atualizar
         const updateEndpoint = vehicleData.tipoVeiculo === "CARRO"
           ? `${BACKEND_URL}/api/veiculos/carros/${vehicleData.id}`
           : `${BACKEND_URL}/api/veiculos/motos/${vehicleData.id}`;
@@ -198,11 +199,10 @@ export default function App() {
         });
 
         if (!res.ok) {
-          const errorData = await res.json();
+          const errorData = await res.json().catch(() => ({}));
           throw new Error(errorData.erro || "Erro ao atualizar veículo");
         }
       } else {
-        // Criar
         const res = await fetch(endpoint, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -210,17 +210,21 @@ export default function App() {
         });
 
         if (!res.ok) {
-          const errorData = await res.json();
+          const errorData = await res.json().catch(() => ({}));
           throw new Error(errorData.erro || "Erro ao cadastrar veículo");
         }
       }
 
       await fetchVehicles();
       setEditingVehicle(null);
+      setIsModalOpen(false);
       toast.success(vehicleData.id ? "Veículo atualizado com sucesso!" : "Veículo cadastrado com sucesso!");
     } catch (err: any) {
-      console.error(err);
+      console.error("Erro ao salvar veículo:", err);
       toast.error(err.message || "Erro ao salvar veículo");
+      throw err;
+    } finally {
+      setVehicleLoading(false);
     }
   };
 
@@ -605,11 +609,14 @@ export default function App() {
       <VehicleFormModal
         open={isModalOpen}
         onOpenChange={(open) => {
-          setIsModalOpen(open);
-          if (!open) setEditingVehicle(null);
+          if (!vehicleLoading) {
+            setIsModalOpen(open);
+            if (!open) setEditingVehicle(null);
+          }
         }}
         onSubmit={handleAddVehicle}
         editingVehicle={editingVehicle}
+        loading={vehicleLoading}
       />
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

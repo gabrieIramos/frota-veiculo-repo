@@ -30,12 +30,17 @@ export function MaintenanceManagement({ currentUser, vehicles, onVehiclesUpdate 
   const [maintenanceToDelete, setMaintenanceToDelete] = useState<number | null>(null);
   const [finalizeDialogOpen, setFinalizeDialogOpen] = useState(false);
   const [maintenanceToFinalize, setMaintenanceToFinalize] = useState<number | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [finalizeLoading, setFinalizeLoading] = useState(false);
+  const [tableLoading, setTableLoading] = useState(true);
 
   const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
   const fetchMaintenances = async () => {
     if (!currentUser) return;
     
+    setTableLoading(true);
     try {
       const res = await fetch(`${BACKEND_URL}/api/manutencoes?usuarioId=${currentUser.usuarioId}`);
       if (!res.ok) {
@@ -50,6 +55,8 @@ export function MaintenanceManagement({ currentUser, vehicles, onVehiclesUpdate 
     } catch (err: any) {
       console.error(err);
       setMaintenances([]);
+    } finally {
+      setTableLoading(false);
     }
   };
 
@@ -60,36 +67,40 @@ export function MaintenanceManagement({ currentUser, vehicles, onVehiclesUpdate 
   }, [currentUser]);
 
   const handleAddMaintenance = async (maintenanceData: any) => {
-    if (!currentUser) return;
+    if (!currentUser || loading) return;
 
     const payload = {
       ...maintenanceData,
       usuarioId: currentUser.usuarioId,
     };
 
+    setLoading(true);
     try {
+      let res;
       if (maintenanceData.id) {
-        const res = await fetch(`${BACKEND_URL}/api/manutencoes/${maintenanceData.id}`, {
+        res = await fetch(`${BACKEND_URL}/api/manutencoes/${maintenanceData.id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         });
-
-        if (!res.ok) {
-          const errorData = await res.json();
-          throw new Error(errorData.erro || "Erro ao atualizar manutenção");
-        }
       } else {
-        const res = await fetch(`${BACKEND_URL}/api/manutencoes`, {
+        res = await fetch(`${BACKEND_URL}/api/manutencoes`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         });
+      }
 
-        if (!res.ok) {
-          const errorData = await res.json();
-          throw new Error(errorData.erro || "Erro ao cadastrar manutenção");
+      if (!res.ok) {
+        const errorText = await res.text();
+        let errorMessage = "Erro ao salvar manutenção";
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.message || errorData.erro || errorMessage;
+        } catch {
+          errorMessage = errorText || errorMessage;
         }
+        throw new Error(errorMessage);
       }
 
       await fetchMaintenances();
@@ -100,8 +111,11 @@ export function MaintenanceManagement({ currentUser, vehicles, onVehiclesUpdate 
       setIsModalOpen(false);
       toast.success(maintenanceData.id ? "Manutenção atualizada com sucesso!" : "Manutenção cadastrada com sucesso!");
     } catch (err: any) {
-      console.error(err);
+      console.error("Erro ao salvar manutenção:", err);
       toast.error(err.message || "Erro ao salvar manutenção");
+      throw err;
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -117,28 +131,35 @@ export function MaintenanceManagement({ currentUser, vehicles, onVehiclesUpdate 
   };
 
   const handleDeleteConfirm = async () => {
-    if (!maintenanceToDelete) return;
+    if (!maintenanceToDelete || deleteLoading) return;
 
+    setDeleteLoading(true);
     try {
       const res = await fetch(`${BACKEND_URL}/api/manutencoes/${maintenanceToDelete}`, {
         method: "DELETE",
       });
 
       if (!res.ok) {
-        const errorData = await res.json();
+        const errorData = await res.json().catch(() => ({}));
         throw new Error(errorData.erro || "Erro ao deletar manutenção");
       }
       
       await fetchMaintenances();
       if (onVehiclesUpdate) {
-        await onVehiclesUpdate();
+        try {
+          await onVehiclesUpdate();
+        } catch (updateErr) {
+          console.error("Erro ao atualizar veículos:", updateErr);
+        }
       }
       setMaintenanceToDelete(null);
       setDeleteDialogOpen(false);
       toast.success("Manutenção deletada com sucesso!");
     } catch (err: any) {
-      console.error(err);
+      console.error("Erro ao deletar manutenção:", err);
       toast.error(err.message || "Erro ao deletar manutenção");
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
@@ -148,28 +169,35 @@ export function MaintenanceManagement({ currentUser, vehicles, onVehiclesUpdate 
   };
 
   const handleFinalizeConfirm = async () => {
-    if (!maintenanceToFinalize) return;
+    if (!maintenanceToFinalize || finalizeLoading) return;
 
+    setFinalizeLoading(true);
     try {
       const res = await fetch(`${BACKEND_URL}/api/manutencoes/${maintenanceToFinalize}/finalizar`, {
         method: "PUT",
       });
 
       if (!res.ok) {
-        const errorData = await res.json();
+        const errorData = await res.json().catch(() => ({}));
         throw new Error(errorData.erro || "Erro ao finalizar manutenção");
       }
       
       await fetchMaintenances();
       if (onVehiclesUpdate) {
-        await onVehiclesUpdate();
+        try {
+          await onVehiclesUpdate();
+        } catch (updateErr) {
+          console.error("Erro ao atualizar veículos:", updateErr);
+        }
       }
       setMaintenanceToFinalize(null);
       setFinalizeDialogOpen(false);
       toast.success("Manutenção finalizada com sucesso!");
     } catch (err: any) {
-      console.error(err);
+      console.error("Erro ao finalizar manutenção:", err);
       toast.error(err.message || "Erro ao finalizar manutenção");
+    } finally {
+      setFinalizeLoading(false);
     }
   };
 
@@ -188,39 +216,61 @@ export function MaintenanceManagement({ currentUser, vehicles, onVehiclesUpdate 
             setIsModalOpen(true);
           }}
           className="gap-2"
+          disabled={vehicles.length === 0}
         >
           <Plus className="h-4 w-4" />
           Cadastrar Nova Manutenção
         </Button>
       </div>
 
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
+      {vehicles.length === 0 ? (
+        <div className="rounded-xl border bg-card p-12 shadow-sm text-center">
+          <p className="text-lg font-semibold mb-2">Nenhum veículo cadastrado</p>
           <p className="text-muted-foreground">
-            {maintenances.length}{" "}
-            {maintenances.length === 1 ? "manutenção encontrada" : "manutenções encontradas"}
+            É necessário cadastrar pelo menos um veículo para poder registrar manutenções.
           </p>
         </div>
+      ) : (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <p className="text-muted-foreground">
+              {maintenances.length}{" "}
+              {maintenances.length === 1 ? "manutenção encontrada" : "manutenções encontradas"}
+            </p>
+          </div>
 
-        <div className="hidden md:block">
-          <MaintenanceTable
-            maintenances={maintenances}
-            onEdit={handleEdit}
-            onDelete={handleDeleteClick}
-            onFinalize={handleFinalizeClick}
-          />
+          <div className="hidden md:block">
+            {tableLoading ? (
+              <div className="rounded-lg border bg-card p-12 shadow-md flex items-center justify-center">
+                <div className="flex flex-col items-center gap-4">
+                  <div className="h-8 w-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                  <p className="text-muted-foreground">Carregando manutenções...</p>
+                </div>
+              </div>
+            ) : (
+              <MaintenanceTable
+                maintenances={maintenances}
+                onEdit={handleEdit}
+                onDelete={handleDeleteClick}
+                onFinalize={handleFinalizeClick}
+              />
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       <MaintenanceFormModal
         open={isModalOpen}
         onOpenChange={(open) => {
-          setIsModalOpen(open);
-          if (!open) setEditingMaintenance(null);
+          if (!loading) {
+            setIsModalOpen(open);
+            if (!open) setEditingMaintenance(null);
+          }
         }}
         onSubmit={handleAddMaintenance}
         editingMaintenance={editingMaintenance}
         vehicles={vehicles}
+        loading={loading}
       />
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
@@ -233,12 +283,13 @@ export function MaintenanceManagement({ currentUser, vehicles, onVehiclesUpdate 
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel disabled={deleteLoading}>Cancelar</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteConfirm}
+              disabled={deleteLoading}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Excluir
+              {deleteLoading ? "Excluindo..." : "Excluir"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -253,11 +304,12 @@ export function MaintenanceManagement({ currentUser, vehicles, onVehiclesUpdate 
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel disabled={finalizeLoading}>Cancelar</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleFinalizeConfirm}
+              disabled={finalizeLoading}
             >
-              Finalizar
+              {finalizeLoading ? "Finalizando..." : "Finalizar"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

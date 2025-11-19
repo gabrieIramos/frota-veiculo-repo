@@ -24,9 +24,10 @@ import { Vehicle } from "./VehicleTable";
 interface RentalFormModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (rental: any) => void;
+  onSubmit: (rental: any) => Promise<void>;
   editingRental?: Rental | null;
   vehicles: Vehicle[];
+  loading?: boolean;
 }
 
 export function RentalFormModal({
@@ -35,6 +36,7 @@ export function RentalFormModal({
   onSubmit,
   editingRental,
   vehicles,
+  loading = false,
 }: RentalFormModalProps) {
   const [formData, setFormData] = useState({
     veiculoId: "",
@@ -70,8 +72,10 @@ export function RentalFormModal({
     }
   }, [editingRental, open]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (loading) return;
     
     if (!formData.veiculoId) {
       alert("Selecione um veículo");
@@ -89,10 +93,14 @@ export function RentalFormModal({
       valor: parseFloat(formData.valor),
     } as any;
 
-    if (editingRental) {
-      onSubmit({ ...prepared, id: editingRental.id });
-    } else {
-      onSubmit(prepared);
+    try {
+      if (editingRental) {
+        await onSubmit({ ...prepared, id: editingRental.id });
+      } else {
+        await onSubmit(prepared);
+      }
+    } catch (err) {
+      console.error("Erro ao submeter formulário:", err);
     }
   };
 
@@ -101,7 +109,11 @@ export function RentalFormModal({
     : vehicles.filter(v => v.status === "DISPONÍVEL");
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(open) => {
+      if (!loading) {
+        onOpenChange(open);
+      }
+    }}>
       <DialogContent className="w-full h-full sm:h-auto sm:max-w-[500px] sm:max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>
@@ -232,12 +244,17 @@ export function RentalFormModal({
             <Button
               type="button"
               variant="outline"
-              onClick={() => onOpenChange(false)}
+              onClick={() => {
+                if (!loading) {
+                  onOpenChange(false);
+                }
+              }}
+              disabled={loading}
             >
               Cancelar
             </Button>
-            <Button type="submit">
-              {editingRental ? "Atualizar" : "Cadastrar"}
+            <Button type="submit" disabled={loading}>
+              {loading ? "Salvando..." : editingRental ? "Atualizar" : "Cadastrar"}
             </Button>
           </DialogFooter>
         </form>

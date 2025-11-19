@@ -22,8 +22,9 @@ import { Vehicle } from "./VehicleTable";
 interface VehicleFormModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (vehicle: any) => void;
+  onSubmit: (vehicle: any) => Promise<void>;
   editingVehicle?: Vehicle | null;
+  loading?: boolean;
 }
 
 export function VehicleFormModal({
@@ -31,6 +32,7 @@ export function VehicleFormModal({
   onOpenChange,
   onSubmit,
   editingVehicle,
+  loading = false,
 }: VehicleFormModalProps) {
   const [formData, setFormData] = useState({
     tipoVeiculo: "CARRO",
@@ -72,8 +74,11 @@ export function VehicleFormModal({
     }
   }, [editingVehicle, open]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (loading) return;
+
     const prepared = {
       ...formData,      
       preco: formData.preco === "" ? 0 : (parseInt(formData.preco as any, 10) || 0) / 100,
@@ -81,12 +86,15 @@ export function VehicleFormModal({
       cilindrada: formData.cilindrada === "" ? undefined : parseInt(formData.cilindrada as any),
     } as any;
 
-    if (editingVehicle) {
-      onSubmit({ ...prepared, id: editingVehicle.id });
-    } else {
-      onSubmit(prepared);
+    try {
+      if (editingVehicle) {
+        await onSubmit({ ...prepared, id: editingVehicle.id });
+      } else {
+        await onSubmit(prepared);
+      }
+    } catch (err) {
+      console.error("Erro ao submeter formulário:", err);
     }
-    onOpenChange(false);
   };
   
   const parseInputToRaw = (input: string) => {
@@ -104,7 +112,11 @@ export function VehicleFormModal({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(open) => {
+      if (!loading) {
+        onOpenChange(open);
+      }
+    }}>
   <DialogContent className="w-full h-full sm:h-auto sm:max-w-[500px] sm:max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>
@@ -278,11 +290,12 @@ export function VehicleFormModal({
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}
+              disabled={loading}
             >
               Cancelar
             </Button>
-            <Button type="submit">
-              {editingVehicle ? "Atualizar" : "Cadastrar"}
+            <Button type="submit" disabled={loading}>
+              {loading ? "Salvando..." : editingVehicle ? "Atualizar" : "Cadastrar"}
             </Button>
           </DialogFooter>
         </form>

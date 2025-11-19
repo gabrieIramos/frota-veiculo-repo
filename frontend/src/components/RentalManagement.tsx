@@ -30,12 +30,17 @@ export function RentalManagement({ currentUser, vehicles, onVehiclesUpdate }: Re
   const [rentalToDelete, setRentalToDelete] = useState<number | null>(null);
   const [finalizeDialogOpen, setFinalizeDialogOpen] = useState(false);
   const [rentalToFinalize, setRentalToFinalize] = useState<number | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [finalizeLoading, setFinalizeLoading] = useState(false);
+  const [tableLoading, setTableLoading] = useState(true);
 
   const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
   const fetchRentals = async () => {
     if (!currentUser) return;
     
+    setTableLoading(true);
     try {
       const res = await fetch(`${BACKEND_URL}/api/alugueis?usuarioId=${currentUser.usuarioId}`);
       if (!res.ok) {
@@ -50,6 +55,8 @@ export function RentalManagement({ currentUser, vehicles, onVehiclesUpdate }: Re
     } catch (err: any) {
       console.error(err);
       setRentals([]);
+    } finally {
+      setTableLoading(false);
     }
   };
 
@@ -60,13 +67,14 @@ export function RentalManagement({ currentUser, vehicles, onVehiclesUpdate }: Re
   }, [currentUser]);
 
   const handleAddRental = async (rentalData: any) => {
-    if (!currentUser) return;
+    if (!currentUser || loading) return;
 
     const payload = {
       ...rentalData,
       usuarioId: currentUser.usuarioId,
     };
 
+    setLoading(true);
     try {
       let res;
       if (rentalData.id) {
@@ -95,16 +103,26 @@ export function RentalManagement({ currentUser, vehicles, onVehiclesUpdate }: Re
         throw new Error(errorMessage);
       }
 
+      const data = await res.json();
+      
       await fetchRentals();
       if (onVehiclesUpdate) {
-        await onVehiclesUpdate();
+        try {
+          await onVehiclesUpdate();
+        } catch (updateErr) {
+          console.error("Erro ao atualizar veículos:", updateErr);
+        }
       }
       setEditingRental(null);
       setIsModalOpen(false);
       toast.success(rentalData.id ? "Aluguel atualizado com sucesso!" : "Aluguel cadastrado com sucesso!");
     } catch (err: any) {
-      console.error(err);
-      toast.error(err.message || "Erro ao salvar aluguel");
+      console.error("Erro ao salvar aluguel:", err);
+      const errorMessage = err?.message || err?.toString() || "Erro ao salvar aluguel";
+      toast.error(errorMessage);
+      throw err;
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -119,28 +137,36 @@ export function RentalManagement({ currentUser, vehicles, onVehiclesUpdate }: Re
   };
 
   const handleDeleteConfirm = async () => {
-    if (!rentalToDelete) return;
+    if (!rentalToDelete || deleteLoading) return;
 
+    setDeleteLoading(true);
     try {
       const res = await fetch(`${BACKEND_URL}/api/alugueis/${rentalToDelete}`, {
         method: "DELETE",
       });
 
       if (!res.ok) {
-        const errorData = await res.json();
+        const errorData = await res.json().catch(() => ({}));
         throw new Error(errorData.erro || "Erro ao deletar aluguel");
       }
       
       await fetchRentals();
       if (onVehiclesUpdate) {
-        await onVehiclesUpdate();
+        try {
+          await onVehiclesUpdate();
+        } catch (updateErr) {
+          console.error("Erro ao atualizar veículos:", updateErr);
+        }
       }
       setRentalToDelete(null);
       setDeleteDialogOpen(false);
       toast.success("Aluguel deletado com sucesso!");
     } catch (err: any) {
-      console.error(err);
-      toast.error(err.message || "Erro ao deletar aluguel");
+      console.error("Erro ao deletar aluguel:", err);
+      const errorMessage = err?.message || err?.toString() || "Erro ao deletar aluguel";
+      toast.error(errorMessage);
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
@@ -150,28 +176,36 @@ export function RentalManagement({ currentUser, vehicles, onVehiclesUpdate }: Re
   };
 
   const handleFinalizeConfirm = async () => {
-    if (!rentalToFinalize) return;
+    if (!rentalToFinalize || finalizeLoading) return;
 
+    setFinalizeLoading(true);
     try {
       const res = await fetch(`${BACKEND_URL}/api/alugueis/${rentalToFinalize}/finalizar`, {
         method: "PUT",
       });
 
       if (!res.ok) {
-        const errorData = await res.json();
+        const errorData = await res.json().catch(() => ({}));
         throw new Error(errorData.erro || "Erro ao finalizar aluguel");
       }
       
       await fetchRentals();
       if (onVehiclesUpdate) {
-        await onVehiclesUpdate();
+        try {
+          await onVehiclesUpdate();
+        } catch (updateErr) {
+          console.error("Erro ao atualizar veículos:", updateErr);
+        }
       }
       setRentalToFinalize(null);
       setFinalizeDialogOpen(false);
       toast.success("Aluguel finalizado com sucesso!");
     } catch (err: any) {
-      console.error(err);
-      toast.error(err.message || "Erro ao finalizar aluguel");
+      console.error("Erro ao finalizar aluguel:", err);
+      const errorMessage = err?.message || err?.toString() || "Erro ao finalizar aluguel";
+      toast.error(errorMessage);
+    } finally {
+      setFinalizeLoading(false);
     }
   };
 
@@ -190,39 +224,61 @@ export function RentalManagement({ currentUser, vehicles, onVehiclesUpdate }: Re
             setIsModalOpen(true);
           }}
           className="gap-2"
+          disabled={vehicles.length === 0}
         >
           <Plus className="h-4 w-4" />
           Cadastrar Novo Aluguel
         </Button>
       </div>
 
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
+      {vehicles.length === 0 ? (
+        <div className="rounded-xl border bg-card p-12 shadow-sm text-center">
+          <p className="text-lg font-semibold mb-2">Nenhum veículo cadastrado</p>
           <p className="text-muted-foreground">
-            {rentals.length}{" "}
-            {rentals.length === 1 ? "aluguel encontrado" : "aluguéis encontrados"}
+            É necessário cadastrar pelo menos um veículo para poder criar aluguéis.
           </p>
         </div>
+      ) : (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <p className="text-muted-foreground">
+              {rentals.length}{" "}
+              {rentals.length === 1 ? "aluguel encontrado" : "aluguéis encontrados"}
+            </p>
+          </div>
 
-        <div className="hidden md:block">
-          <RentalTable
-            rentals={rentals}
-            onEdit={handleEdit}
-            onDelete={handleDeleteClick}
-            onFinalize={handleFinalizeClick}
-          />
+          <div className="hidden md:block">
+            {tableLoading ? (
+              <div className="rounded-lg border bg-card p-12 shadow-md flex items-center justify-center">
+                <div className="flex flex-col items-center gap-4">
+                  <div className="h-8 w-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                  <p className="text-muted-foreground">Carregando aluguéis...</p>
+                </div>
+              </div>
+            ) : (
+              <RentalTable
+                rentals={rentals}
+                onEdit={handleEdit}
+                onDelete={handleDeleteClick}
+                onFinalize={handleFinalizeClick}
+              />
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       <RentalFormModal
         open={isModalOpen}
         onOpenChange={(open) => {
-          setIsModalOpen(open);
-          if (!open) setEditingRental(null);
+          if (!loading) {
+            setIsModalOpen(open);
+            if (!open) setEditingRental(null);
+          }
         }}
         onSubmit={handleAddRental}
         editingRental={editingRental}
         vehicles={vehicles}
+        loading={loading}
       />
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
@@ -235,12 +291,13 @@ export function RentalManagement({ currentUser, vehicles, onVehiclesUpdate }: Re
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel disabled={deleteLoading}>Cancelar</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteConfirm}
+              disabled={deleteLoading}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Excluir
+              {deleteLoading ? "Excluindo..." : "Excluir"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -255,11 +312,12 @@ export function RentalManagement({ currentUser, vehicles, onVehiclesUpdate }: Re
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel disabled={finalizeLoading}>Cancelar</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleFinalizeConfirm}
+              disabled={finalizeLoading}
             >
-              Finalizar
+              {finalizeLoading ? "Finalizando..." : "Finalizar"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
