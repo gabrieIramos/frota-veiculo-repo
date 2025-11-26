@@ -38,12 +38,23 @@ export function VehicleFilters({
 }: VehicleFiltersProps) {
   const [isOpen, setIsOpen] = useState(false);
 
+  const mergedFilters = {
+    type: filters?.type ?? "all",
+    manufacturer: filters?.manufacturer ?? "",
+    yearFrom: filters?.yearFrom ?? "",
+    yearTo: filters?.yearTo ?? "",
+    status: filters?.status ?? "",
+    quantidadePortas: filters?.quantidadePortas ?? "",
+    tipoCombustivel: filters?.tipoCombustivel ?? "",
+    cilindrada: filters?.cilindrada ?? "",
+  };
+
   const hasActiveFilters =
-    (filters.type && filters.type !== "all") ||
-    !!filters.manufacturer ||
-    !!filters.yearFrom ||
-    !!filters.yearTo ||
-    !!filters.status;
+    (mergedFilters.type && mergedFilters.type !== "all") ||
+    !!mergedFilters.manufacturer ||
+    !!mergedFilters.yearFrom ||
+    !!mergedFilters.yearTo ||
+    !!mergedFilters.status;
 
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
@@ -77,9 +88,9 @@ export function VehicleFilters({
             <div className="grid gap-2">
               <Label htmlFor="filter-type">Tipo de Veículo</Label>
               <Select
-                value={filters.type}
+                value={mergedFilters.type}
                 onValueChange={(value: string) =>
-                  onFilterChange({ ...filters, type: value })
+                  onFilterChange({ ...mergedFilters, type: value })
                 }
               >
                 <SelectTrigger id="filter-type">
@@ -97,9 +108,9 @@ export function VehicleFilters({
               <Input
                 id="filter-manufacturer"
                 placeholder="Ex: Honda, Toyota"
-                value={filters.manufacturer}
+                value={mergedFilters.manufacturer}
                 onChange={(e) =>
-                  onFilterChange({ ...filters, manufacturer: e.target.value })
+                  onFilterChange({ ...mergedFilters, manufacturer: e.target.value })
                 }
               />
             </div>
@@ -109,9 +120,9 @@ export function VehicleFilters({
                 id="filter-year-from"
                 type="number"
                 placeholder="2000"
-                value={filters.yearFrom}
+                value={mergedFilters.yearFrom}
                 onChange={(e) =>
-                  onFilterChange({ ...filters, yearFrom: e.target.value })
+                  onFilterChange({ ...mergedFilters, yearFrom: e.target.value })
                 }
               />
             </div>
@@ -121,18 +132,18 @@ export function VehicleFilters({
                 id="filter-year-to"
                 type="number"
                 placeholder={new Date().getFullYear().toString()}
-                value={filters.yearTo}
+                value={mergedFilters.yearTo}
                 onChange={(e) =>
-                  onFilterChange({ ...filters, yearTo: e.target.value })
+                  onFilterChange({ ...mergedFilters, yearTo: e.target.value })
                 }
               />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="filter-status">Status</Label>
               <Select
-                value={filters.status || ""}
+                value={mergedFilters.status || ""}
                 onValueChange={(value: string) =>
-                  onFilterChange({ ...filters, status: value })
+                  onFilterChange({ ...mergedFilters, status: value })
                 }
               >
                 <SelectTrigger id="filter-status">
@@ -149,7 +160,7 @@ export function VehicleFilters({
             </div>
 
             {/* Campos específicos por tipo */}
-            {filters.type === "CARRO" && (
+            {mergedFilters.type === "CARRO" && (
               <>
                 <div className="grid gap-2">
                   <Label htmlFor="filter-quantidade-portas">Quantidade de Portas</Label>
@@ -159,9 +170,9 @@ export function VehicleFilters({
                     min={1}
                     max={8}
                     placeholder="4"
-                    value={filters.quantidadePortas || ""}
+                    value={mergedFilters.quantidadePortas || ""}
                     onChange={(e) =>
-                      onFilterChange({ ...filters, quantidadePortas: e.target.value })
+                      onFilterChange({ ...mergedFilters, quantidadePortas: e.target.value })
                     }
                   />
                 </div>
@@ -169,10 +180,10 @@ export function VehicleFilters({
                 <div className="grid gap-2">
                   <Label htmlFor="filter-tipo-combustivel">Tipo de Combustível</Label>
                   <Select
-                    value={filters.tipoCombustivel || ""}
-                    onValueChange={(value: string) =>
-                      onFilterChange({ ...filters, tipoCombustivel: value })
-                    }
+                    value={mergedFilters.tipoCombustivel || ""}
+                      onValueChange={(value: string) =>
+                        onFilterChange({ ...mergedFilters, tipoCombustivel: value })
+                      }
                   >
                     <SelectTrigger id="filter-tipo-combustivel">
                       <SelectValue placeholder="Qualquer" />
@@ -189,7 +200,7 @@ export function VehicleFilters({
               </>
             )}
 
-            {filters.type === "MOTO" && (
+            {mergedFilters.type === "MOTO" && (
               <div className="grid gap-2">
                 <Label htmlFor="filter-cilindrada">Cilindrada mínima (cc)</Label>
                 <Input
@@ -197,9 +208,9 @@ export function VehicleFilters({
                   type="number"
                   min={0}
                   placeholder="150"
-                  value={filters.cilindrada || ""}
+                  value={mergedFilters.cilindrada || ""}
                   onChange={(e) =>
-                    onFilterChange({ ...filters, cilindrada: e.target.value })
+                    onFilterChange({ ...mergedFilters, cilindrada: e.target.value })
                   }
                 />
               </div>

@@ -13,11 +13,20 @@ public class AuthResponseDTO {
     private String email;
     private String empresa;
     private String mensagem;
+    private String token;
 
     public AuthResponseDTO(Integer usuarioId, String nome, String email, String empresa) {
         this.usuarioId = usuarioId;
         this.nome = nome;
         this.email = email;
         this.empresa = empresa;
+    }
+
+    public AuthResponseDTO(Integer usuarioId, String nome, String email, String empresa, String token) {
+        this.usuarioId = usuarioId;
+        this.nome = nome;
+        this.email = email;
+        this.empresa = empresa;
+        this.token = token;
     }
 }

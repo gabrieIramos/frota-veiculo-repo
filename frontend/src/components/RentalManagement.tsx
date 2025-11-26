@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { authFetch } from "../utils/api";
 import { toast } from "sonner";
 import { Plus } from "lucide-react";
 import { Button } from "./ui/button";
@@ -42,7 +43,7 @@ export function RentalManagement({ currentUser, vehicles, onVehiclesUpdate }: Re
     
     setTableLoading(true);
     try {
-      const res = await fetch(`${BACKEND_URL}/api/alugueis?usuarioId=${currentUser.usuarioId}`);
+      const res = await authFetch(`${BACKEND_URL}/api/alugueis?usuarioId=${currentUser.usuarioId}`);
       if (!res.ok) {
         if (res.status === 500) {
           setRentals([]);
@@ -78,13 +79,13 @@ export function RentalManagement({ currentUser, vehicles, onVehiclesUpdate }: Re
     try {
       let res;
       if (rentalData.id) {
-        res = await fetch(`${BACKEND_URL}/api/alugueis/${rentalData.id}`, {
+        res = await authFetch(`${BACKEND_URL}/api/alugueis/${rentalData.id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         });
       } else {
-        res = await fetch(`${BACKEND_URL}/api/alugueis`, {
+        res = await authFetch(`${BACKEND_URL}/api/alugueis`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
@@ -141,7 +142,7 @@ export function RentalManagement({ currentUser, vehicles, onVehiclesUpdate }: Re
 
     setDeleteLoading(true);
     try {
-      const res = await fetch(`${BACKEND_URL}/api/alugueis/${rentalToDelete}`, {
+      const res = await authFetch(`${BACKEND_URL}/api/alugueis/${rentalToDelete}`, {
         method: "DELETE",
       });
 
@@ -180,7 +181,7 @@ export function RentalManagement({ currentUser, vehicles, onVehiclesUpdate }: Re
 
     setFinalizeLoading(true);
     try {
-      const res = await fetch(`${BACKEND_URL}/api/alugueis/${rentalToFinalize}/finalizar`, {
+      const res = await authFetch(`${BACKEND_URL}/api/alugueis/${rentalToFinalize}/finalizar`, {
         method: "PUT",
       });
 

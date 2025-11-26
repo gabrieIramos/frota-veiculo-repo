@@ -48,6 +48,7 @@ export function MaintenanceFormModal({
     oficina: "",
     status: "EM_ANDAMENTO",
   });
+  const [errors, setErrors] = useState<{ tipo?: string; oficina?: string; descricao?: string }>({});
 
   useEffect(() => {
     if (editingMaintenance) {
@@ -79,6 +80,21 @@ export function MaintenanceFormModal({
     e.preventDefault();
     
     if (loading) return;
+
+    const newErrors: { tipo?: string; oficina?: string; descricao?: string } = {};
+    const onlyDigits = /^\s*\d+\s*$/;
+    if (!formData.tipo || formData.tipo.trim().length < 2 || onlyDigits.test(formData.tipo)) {
+      newErrors.tipo = 'Tipo inválido (insira texto)';
+    }
+    if (!formData.oficina || formData.oficina.trim().length < 2 || onlyDigits.test(formData.oficina)) {
+      newErrors.oficina = 'Oficina inválida (insira texto)';
+    }
+    if (formData.descricao && (formData.descricao.trim().length < 5 || onlyDigits.test(formData.descricao))) {
+      newErrors.descricao = 'Descrição inválida (insira texto mais descritivo)';
+    }
+
+    setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) return;
 
     const prepared = {
       ...formData,
@@ -153,6 +169,9 @@ export function MaintenanceFormModal({
                 }
                 required
               />
+              {errors.tipo && (
+                <p className="text-sm text-red-600 mt-1">{errors.tipo}</p>
+              )}
             </div>
 
             <div className="grid gap-2">
@@ -208,6 +227,9 @@ export function MaintenanceFormModal({
                 }
                 required
               />
+              {errors.oficina && (
+                <p className="text-sm text-red-600 mt-1">{errors.oficina}</p>
+              )}
             </div>
 
             <div className="grid gap-2">
@@ -221,6 +243,9 @@ export function MaintenanceFormModal({
                 }
                 rows={3}
               />
+              {errors.descricao && (
+                <p className="text-sm text-red-600 mt-1">{errors.descricao}</p>
+              )}
             </div>
 
             <div className="grid gap-2">

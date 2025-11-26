@@ -18,6 +18,7 @@ import {
   Line,
 } from 'recharts';
 import { useState, useEffect } from 'react';
+import { authFetch } from '../utils/api';
 
 interface DashboardProps {
   vehicles: Vehicle[];
@@ -31,26 +32,16 @@ export function Dashboard({ vehicles, currentUser }: DashboardProps) {
 
   useEffect(() => {
     if (currentUser) {
-      fetch(`${BACKEND_URL}/api/alugueis?usuarioId=${currentUser.usuarioId}`)
-        .then(res => {
-          if (res.ok) {
-            return res.json();
-          }
-          return [];
-        })
+      authFetch(`${BACKEND_URL}/api/alugueis?usuarioId=${currentUser.usuarioId}`)
+        .then(res => (res.ok ? res.json() : []))
         .then(data => setRentals(data || []))
         .catch(err => {
           console.error(err);
           setRentals([]);
         });
 
-      fetch(`${BACKEND_URL}/api/manutencoes?usuarioId=${currentUser.usuarioId}`)
-        .then(res => {
-          if (res.ok) {
-            return res.json();
-          }
-          return [];
-        })
+      authFetch(`${BACKEND_URL}/api/manutencoes?usuarioId=${currentUser.usuarioId}`)
+        .then(res => (res.ok ? res.json() : []))
         .then(data => setMaintenances(data || []))
         .catch(err => {
           console.error(err);

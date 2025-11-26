@@ -1,6 +1,7 @@
 /// <reference types="vite/client" />
 
 import { useState, useEffect } from "react";
+import { authFetch } from "./utils/api";
 import { toast } from "sonner";
 import {
   Car,
@@ -121,7 +122,7 @@ export default function App() {
     if (!currentUser) return;
     
     try {
-      const res = await fetch(`${BACKEND_URL}/api/veiculos?usuarioId=${currentUser.usuarioId}`);
+      const res = await authFetch(`${BACKEND_URL}/api/veiculos?usuarioId=${currentUser.usuarioId}`);
       if (!res.ok) throw new Error("Erro ao buscar veículos");
       const data = await res.json();
       
@@ -145,6 +146,27 @@ export default function App() {
       toast.error(err.message || "Erro ao buscar veículos");
     }
   };
+
+  // On mount, try to restore session from token
+  useEffect(() => {
+    const tryRestore = async () => {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      try {
+        const res = await authFetch(`${BACKEND_URL}/api/auth/validate`, { method: 'GET' });
+        if (!res.ok) throw new Error('Token inválido');
+        const data = await res.json();
+        setCurrentUser({ usuarioId: data.usuarioId, nome: data.nome, email: data.email, empresa: data.empresa });
+        setIsAuthenticated(true);
+      } catch (err) {
+        console.warn('Não foi possível restaurar sessão:', err);
+        localStorage.removeItem('token');
+      }
+    };
+
+    tryRestore();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (!BACKEND_URL) {
@@ -192,7 +214,7 @@ export default function App() {
           ? `${BACKEND_URL}/api/veiculos/carros/${vehicleData.id}`
           : `${BACKEND_URL}/api/veiculos/motos/${vehicleData.id}`;
         
-        const res = await fetch(updateEndpoint, {
+        const res = await authFetch(updateEndpoint, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
@@ -203,7 +225,7 @@ export default function App() {
           throw new Error(errorData.erro || "Erro ao atualizar veículo");
         }
       } else {
-        const res = await fetch(endpoint, {
+        const res = await authFetch(endpoint, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
@@ -242,7 +264,7 @@ export default function App() {
     if (!vehicleToDelete) return;
 
     try {
-      const res = await fetch(`${BACKEND_URL}/api/veiculos/${vehicleToDelete}`, {
+      const res = await authFetch(`${BACKEND_URL}/api/veiculos/${vehicleToDelete}`, {
         method: "DELETE",
       });
 
@@ -338,6 +360,10 @@ export default function App() {
       }
 
       const data = await res.json();
+      // persist token for session across refresh
+      if (data.token) {
+        localStorage.setItem('token', data.token);
+      }
       setCurrentUser({
         usuarioId: data.usuarioId,
         nome: data.nome,
@@ -373,6 +399,9 @@ export default function App() {
       }
 
       const data = await res.json();
+      if (data.token) {
+        localStorage.setItem('token', data.token);
+      }
       setCurrentUser({
         usuarioId: data.usuarioId,
         nome: data.nome,
@@ -392,6 +421,7 @@ export default function App() {
     setCurrentUser(null);
     setCurrentView("login");
     setVehicles([]);
+    localStorage.removeItem('token');
   };
 
   // Se não estiver autenticado, mostrar telas de login/cadastro

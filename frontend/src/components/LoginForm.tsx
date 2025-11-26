@@ -17,10 +17,21 @@ export function LoginForm({
 }: LoginFormProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (email && password) {
+    const newErrors: { email?: string; password?: string } = {};
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email || !emailRegex.test(email)) {
+      newErrors.email = "Insira um e-mail válido";
+    }
+    if (!password || password.length < 6) {
+      newErrors.password = "A senha deve ter ao menos 6 caracteres";
+    }
+
+    setErrors(newErrors);
+    if (Object.keys(newErrors).length === 0) {
       onLogin(email, password);
     }
   };
@@ -69,6 +80,9 @@ export function LoginForm({
                   className="pl-10"
                   required
                 />
+                {errors.email && (
+                  <p className="text-sm text-red-600 mt-1">{errors.email}</p>
+                )}
               </div>
             </div>
 
@@ -85,6 +99,9 @@ export function LoginForm({
                   className="pl-10"
                   required
                 />
+                {errors.password && (
+                  <p className="text-sm text-red-600 mt-1">{errors.password}</p>
+                )}
               </div>
             </div>
 

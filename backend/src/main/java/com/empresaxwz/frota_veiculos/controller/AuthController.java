@@ -5,6 +5,7 @@ import com.empresaxwz.frota_veiculos.dto.LoginRequestDTO;
 import com.empresaxwz.frota_veiculos.dto.RegisterRequestDTO;
 import com.empresaxwz.frota_veiculos.model.Usuario;
 import com.empresaxwz.frota_veiculos.service.UsuarioService;
+import com.empresaxwz.frota_veiculos.util.JwtUtil;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -20,10 +21,12 @@ import java.util.Optional;
 public class AuthController {
 
     private final UsuarioService usuarioService;
+    private final JwtUtil jwtUtil;
 
     @Autowired
-    public AuthController(UsuarioService usuarioService) {
+    public AuthController(UsuarioService usuarioService, JwtUtil jwtUtil) {
         this.usuarioService = usuarioService;
+        this.jwtUtil = jwtUtil;
     }
 
     @PostMapping("/register")
@@ -38,13 +41,16 @@ public class AuthController {
 
             Usuario novoUsuario = usuarioService.cadastrarUsuario(usuario);
 
+            String token = jwtUtil.generateToken(novoUsuario.getId(), novoUsuario.getEmail());
+
             AuthResponseDTO response = new AuthResponseDTO(
                     novoUsuario.getId(),
                     novoUsuario.getNome(),
                     novoUsuario.getEmail(),
-                    novoUsuario.getEmpresa(),
-                    "Cadastro realizado com sucesso!"
+                    novoUsuario.getEmpresa()
             );
+            response.setToken(token);
+            response.setMensagem("Cadastro realizado com sucesso!");
 
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
         } catch (IllegalArgumentException e) {
@@ -62,15 +68,50 @@ public class AuthController {
 
         Usuario usuario = usuarioOpt.get();
 
+        String token = jwtUtil.generateToken(usuario.getId(), usuario.getEmail());
+
         AuthResponseDTO response = new AuthResponseDTO(
                 usuario.getId(),
                 usuario.getNome(),
                 usuario.getEmail(),
-                usuario.getEmpresa(),
-                "Login realizado com sucesso!"
+                usuario.getEmpresa()
         );
+        response.setToken(token);
+        response.setMensagem("Login realizado com sucesso!");
 
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/validate")
+    public ResponseEntity<AuthResponseDTO> validateToken(@RequestHeader(name = "Authorization", required = false) String authorization) {
+        if (authorization == null || !authorization.startsWith("Bearer ")) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Token ausente ou inválido");
+        }
+
+        String token = authorization.substring(7);
+        try {
+            var claims = jwtUtil.validateAndGetClaims(token);
+            Integer usuarioId = Integer.valueOf(claims.getSubject());
+
+            Optional<Usuario> usuarioOpt = usuarioService.buscarPorId(usuarioId);
+            if (usuarioOpt.isEmpty()) {
+                throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Usuário não encontrado");
+            }
+
+            Usuario usuario = usuarioOpt.get();
+            AuthResponseDTO response = new AuthResponseDTO(
+                    usuario.getId(),
+                    usuario.getNome(),
+                    usuario.getEmail(),
+                    usuario.getEmpresa()
+            );
+            response.setMensagem("Sessão válida");
+            response.setToken(token);
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Token inválido ou expirado");
+        }
     }
 
     @GetMapping("/usuario/{id}")

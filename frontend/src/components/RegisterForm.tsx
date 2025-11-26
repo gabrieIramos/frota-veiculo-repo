@@ -15,6 +15,7 @@ export function RegisterForm({ onRegister, onNavigateToLogin }: RegisterFormProp
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [company, setCompany] = useState('');
+  const [errors, setErrors] = useState<{ name?: string; email?: string; password?: string; company?: string }>({});
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,9 +24,25 @@ export function RegisterForm({ onRegister, onNavigateToLogin }: RegisterFormProp
       alert('As senhas não coincidem!');
       return;
     }
+    const newErrors: { name?: string; email?: string; password?: string; company?: string } = {};
+    const hasLetter = /[A-Za-zÀ-ú]/;
+    if (!name || name.trim().length < 2 || !hasLetter.test(name)) {
+      newErrors.name = 'Insira um nome válido (contendo letras)';
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email || !emailRegex.test(email)) {
+      newErrors.email = 'Insira um e-mail válido';
+    }
+    if (!password || password.length < 6) {
+      newErrors.password = 'A senha deve ter ao menos 6 caracteres';
+    }
+    if (!company || company.trim().length < 2 || !hasLetter.test(company)) {
+      newErrors.company = 'Nome da empresa inválido (insira também letras)';
+    }
 
-    if (name && email && password && company) {
-      onRegister(name, email, password, company);
+    setErrors(newErrors);
+    if (Object.keys(newErrors).length === 0) {
+      onRegister(name.trim(), email.trim(), password, company.trim());
     }
   };
 
@@ -69,6 +86,9 @@ export function RegisterForm({ onRegister, onNavigateToLogin }: RegisterFormProp
                   className="pl-10"
                   required
                 />
+                {errors.name && (
+                  <p className="text-sm text-red-600 mt-1">{errors.name}</p>
+                )}
               </div>
             </div>
 
@@ -85,6 +105,9 @@ export function RegisterForm({ onRegister, onNavigateToLogin }: RegisterFormProp
                   className="pl-10"
                   required
                 />
+                {errors.company && (
+                  <p className="text-sm text-red-600 mt-1">{errors.company}</p>
+                )}
               </div>
             </div>
 
@@ -101,6 +124,9 @@ export function RegisterForm({ onRegister, onNavigateToLogin }: RegisterFormProp
                   className="pl-10"
                   required
                 />
+                {errors.email && (
+                  <p className="text-sm text-red-600 mt-1">{errors.email}</p>
+                )}
               </div>
             </div>
 

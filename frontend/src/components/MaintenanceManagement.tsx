@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { authFetch } from "../utils/api";
 import { toast } from "sonner";
 import { Plus } from "lucide-react";
 import { Button } from "./ui/button";
@@ -42,7 +43,7 @@ export function MaintenanceManagement({ currentUser, vehicles, onVehiclesUpdate 
     
     setTableLoading(true);
     try {
-      const res = await fetch(`${BACKEND_URL}/api/manutencoes?usuarioId=${currentUser.usuarioId}`);
+      const res = await authFetch(`${BACKEND_URL}/api/manutencoes?usuarioId=${currentUser.usuarioId}`);
       if (!res.ok) {
         if (res.status === 500) {
           setMaintenances([]);
@@ -78,13 +79,13 @@ export function MaintenanceManagement({ currentUser, vehicles, onVehiclesUpdate 
     try {
       let res;
       if (maintenanceData.id) {
-        res = await fetch(`${BACKEND_URL}/api/manutencoes/${maintenanceData.id}`, {
+        res = await authFetch(`${BACKEND_URL}/api/manutencoes/${maintenanceData.id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         });
       } else {
-        res = await fetch(`${BACKEND_URL}/api/manutencoes`, {
+        res = await authFetch(`${BACKEND_URL}/api/manutencoes`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
@@ -135,7 +136,7 @@ export function MaintenanceManagement({ currentUser, vehicles, onVehiclesUpdate 
 
     setDeleteLoading(true);
     try {
-      const res = await fetch(`${BACKEND_URL}/api/manutencoes/${maintenanceToDelete}`, {
+      const res = await authFetch(`${BACKEND_URL}/api/manutencoes/${maintenanceToDelete}`, {
         method: "DELETE",
       });
 
@@ -173,7 +174,7 @@ export function MaintenanceManagement({ currentUser, vehicles, onVehiclesUpdate 
 
     setFinalizeLoading(true);
     try {
-      const res = await fetch(`${BACKEND_URL}/api/manutencoes/${maintenanceToFinalize}/finalizar`, {
+      const res = await authFetch(`${BACKEND_URL}/api/manutencoes/${maintenanceToFinalize}/finalizar`, {
         method: "PUT",
       });
 

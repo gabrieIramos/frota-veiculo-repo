@@ -47,6 +47,7 @@ export function RentalFormModal({
     observacoes: "",
     status: "ATIVO",
   });
+  const [errors, setErrors] = useState<{ cliente?: string }>({});
 
   useEffect(() => {
     if (editingRental) {
@@ -86,6 +87,14 @@ export function RentalFormModal({
       alert("Preencha todos os campos obrigatórios");
       return;
     }
+
+    const newErrors: { cliente?: string } = {};
+    const hasLetter = /[A-Za-zÀ-ú]/;
+    if (!formData.cliente || formData.cliente.trim().length < 2 || !hasLetter.test(formData.cliente)) {
+      newErrors.cliente = 'Nome de cliente inválido (insira texto)';
+    }
+    setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) return;
 
     const prepared = {
       ...formData,
@@ -164,6 +173,9 @@ export function RentalFormModal({
                 }
                 required
               />
+              {errors.cliente && (
+                <p className="text-sm text-red-600 mt-1">{errors.cliente}</p>
+              )}
             </div>
 
             <div className="grid gap-2">
