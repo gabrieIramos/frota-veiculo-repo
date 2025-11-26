@@ -54,26 +54,51 @@ export function Dashboard({ vehicles, currentUser }: DashboardProps) {
   const totalValue = (vehicles || []).reduce((sum, vehicle) => sum + (Number((vehicle as any).preco) || 0), 0);
   
   const vehiclesByStatus = (vehicles || []).reduce((acc, vehicle) => {
-    const status = vehicle.status || 'INDISPONÍVEL';
-    acc[status] = (acc[status] || 0) + 1;
+    const raw = vehicle.status;
+    const removeDiacritics = (str: string) =>
+      str.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+    const normalizeStatus = (s: any) => {
+      if (s === null || s === undefined) return 'INDISPONIVEL';
+      const base = removeDiacritics(String(s)).toUpperCase();
+      if (base.includes('DISP')) return 'DISPONIVEL';
+      if (base.includes('ALUG')) return 'ALUGADO';
+      if (base.includes('MANUT')) return 'MANUTENCAO';
+      if (base.includes('INDISP')) return 'INDISPONIVEL';
+      return 'INDISPONIVEL';
+    };
+
+    const key = normalizeStatus(raw);
+    acc[key] = (acc[key] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
 
-  const statusChartData = [
-    { name: 'Disponível', value: vehiclesByStatus['DISPONÍVEL'] || 0 },
-    { name: 'Alugado', value: vehiclesByStatus['ALUGADO'] || 0 },
-    { name: 'Manutenção', value: vehiclesByStatus['MANUTENÇÃO'] || 0 },
-    { name: 'Indisponível', value: vehiclesByStatus['INDISPONÍVEL'] || 0 },
-  ];
+  const statusLabelMap: Record<string, string> = {
+    DISPONIVEL: 'Disponível',
+    ALUGADO: 'Alugado',
+    MANUTENCAO: 'Manutenção',
+    INDISPONIVEL: 'Indisponível',
+  };
+
+  const statusOrder = ['DISPONIVEL', 'ALUGADO', 'MANUTENCAO', 'INDISPONIVEL'];
+
+  const statusChartData = statusOrder.map((k) => ({ name: statusLabelMap[k], value: vehiclesByStatus[k] || 0 }));
+  const statusTotal = statusChartData.reduce((s, it) => s + (it.value || 0), 0);
 
   const currentMonth = new Date().getMonth();
   const currentYear = new Date().getFullYear();
   const monthlyRevenue = rentals
     .filter(r => {
-      const rentalDate = new Date(r.dataRetirada);
-      return rentalDate.getMonth() === currentMonth && rentalDate.getFullYear() === currentYear;
+      try {
+        if (!r || !r.dataRetirada) return false;
+        const rentalDate = new Date(r.dataRetirada);
+        if (isNaN(rentalDate.getTime())) return false;
+        return rentalDate.getMonth() === currentMonth && rentalDate.getFullYear() === currentYear;
+      } catch (err) {
+        return false;
+      }
     })
-    .reduce((sum, r) => sum + (r.valor || 0), 0);
+    .reduce((sum, r) => sum + (Number(r?.valor) || 0), 0);
 
   const monthNames = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
   const last12Months = Array.from({ length: 12 }, (_, i) => {
@@ -89,15 +114,23 @@ export function Dashboard({ vehicles, currentUser }: DashboardProps) {
   const monthlyRevenueData = last12Months.map(({ month, year, name }) => {
     const revenue = rentals
       .filter(r => {
-        const rentalDate = new Date(r.dataRetirada);
-        return rentalDate.getMonth() === month && rentalDate.getFullYear() === year;
+        try {
+          if (!r || !r.dataRetirada) return false;
+          const rentalDate = new Date(r.dataRetirada);
+          if (isNaN(rentalDate.getTime())) return false;
+          return rentalDate.getMonth() === month && rentalDate.getFullYear() === year;
+        } catch (err) {
+          return false;
+        }
       })
-      .reduce((sum, r) => sum + (r.valor || 0), 0);
+      .reduce((sum, r) => sum + (Number(r?.valor) || 0), 0);
     return { name, receita: revenue };
   });
 
   const vehiclesRentalCount = rentals.reduce((acc, rental) => {
-    const key = `${rental.veiculoModelo} - ${rental.veiculoFabricante}`;
+    const modelo = rental?.veiculoModelo || 'Desconhecido';
+    const fabricante = rental?.veiculoFabricante || 'Desconhecido';
+    const key = `${modelo} - ${fabricante}`;
     acc[key] = (acc[key] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
@@ -193,7 +226,7 @@ export function Dashboard({ vehicles, currentUser }: DashboardProps) {
             </div>
           </div>
           <div className="mt-4 flex items-center gap-2 text-sm">
-            <span className="text-green-600">{vehiclesByStatus['DISPONÍVEL'] || 0} disponíveis</span>
+            <span className="text-green-600">{vehiclesByStatus['DISPONIVEL'] || 0} disponíveis</span>
             <span className="text-muted-foreground">•</span>
             <span className="text-blue-600">{vehiclesByStatus['ALUGADO'] || 0} alugados</span>
           </div>
@@ -258,28 +291,40 @@ export function Dashboard({ vehicles, currentUser }: DashboardProps) {
         <div className="rounded-xl border bg-card p-6 shadow-sm">
           <h3 className="mb-4">Veículos por Status</h3>
           <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie
-                data={statusChartData}
-                cx="50%"
-                cy="50%"
-                labelLine={false}
-                label={({ name, percent }) =>
-                  `${name}: ${(percent * 100).toFixed(0)}%`
-                }
-                outerRadius={80}
-                fill="#8884d8"
-                dataKey="value"
-              >
-                {statusChartData.map((entry, index) => (
-                  <Cell
-                    key={`cell-${index}`}
-                    fill={['#22c55e', '#3b82f6', '#eab308', '#ef4444'][index % 4]}
-                  />
-                ))}
-              </Pie>
-              <Tooltip />
-            </PieChart>
+            {statusTotal > 0 ? (
+              <PieChart>
+                <Pie
+                  data={statusChartData}
+                  cx="40%"
+                  cy="50%"
+                  labelLine={true}
+                  label={false}
+                  outerRadius={80}
+                  fill="#8884d8"
+                  dataKey="value"
+                >
+                  {statusChartData.map((entry, index) => (
+                    <Cell
+                      key={`cell-${index}`}
+                      fill={['#22c55e', '#3b82f6', '#eab308', '#ef4444'][index % 4]}
+                    />
+                  ))}
+                </Pie>
+                <Tooltip />
+                <Legend
+                  layout="vertical"
+                  verticalAlign="middle"
+                  align="right"
+                  formatter={(value: any, entry: any) => {
+                    const v = entry?.payload?.value || 0;
+                    const pct = statusTotal > 0 ? Math.round((v / statusTotal) * 100) : 0;
+                    return `${value}: ${v} (${pct}%)`;
+                  }}
+                />
+              </PieChart>
+            ) : (
+              <div className="flex h-[300px] items-center justify-center text-muted-foreground">Nenhum veículo cadastrado</div>
+            )}
           </ResponsiveContainer>
         </div>
 
@@ -402,7 +447,7 @@ export function Dashboard({ vehicles, currentUser }: DashboardProps) {
                 {Object.entries(vehiclesByManufacturer).map(
                   ([manufacturer, count]) => {
                     const manufacturerVehicles = vehicles.filter(
-                      (v) => v.fabricante === manufacturer
+                      (v) => (v.fabricante || 'Desconhecido') === manufacturer
                     );
                     const manufacturerTotal = manufacturerVehicles.reduce(
                       (sum, v) => sum + (Number((v as any).preco) || 0),

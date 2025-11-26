@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { authFetch } from "../utils/api";
+import { toast } from "sonner";
 import { Button } from "./ui/button";
 import {
   Dialog,
@@ -46,6 +48,10 @@ export function VehicleFormModal({
     cilindrada: "",
   });
 
+  const [hasActiveRental, setHasActiveRental] = useState(false);
+  const [hasActiveMaintenance, setHasActiveMaintenance] = useState(false);
+  const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+
   useEffect(() => {
     if (editingVehicle) {
       setFormData({
@@ -59,6 +65,46 @@ export function VehicleFormModal({
         tipoCombustivel: editingVehicle.tipoCombustivel || "GASOLINA",
         cilindrada: editingVehicle.cilindrada !== undefined ? String(editingVehicle.cilindrada) : "",
       });
+      // check if vehicle has active rental or maintenance
+      (async () => {
+        try {
+          setHasActiveRental(false);
+          setHasActiveMaintenance(false);
+          if (!editingVehicle || editingVehicle.id == null) return;
+          const rentRes = await authFetch(`${BACKEND_URL}/api/alugueis?veiculoId=${editingVehicle.id}`);
+          if (rentRes.ok) {
+            const rentData = await rentRes.json();
+            if (Array.isArray(rentData)) {
+              const active = rentData.some((r: any) => {
+                const s = (r?.status || '').toUpperCase();
+                return s === 'ATIVO' || s === 'ALUGADO' || s === 'EM_ANDAMENTO';
+              });
+              setHasActiveRental(active);
+            }
+          }
+        } catch (err) {
+          console.error('Erro ao checar aluguéis do veículo', err);
+          setHasActiveRental(false);
+        }
+
+        try {
+          if (!editingVehicle || editingVehicle.id == null) return;
+          const mRes = await authFetch(`${BACKEND_URL}/api/manutencoes?veiculoId=${editingVehicle.id}`);
+          if (mRes.ok) {
+            const mData = await mRes.json();
+            if (Array.isArray(mData)) {
+              const activeM = mData.some((m: any) => {
+                const s = (m?.status || '').toUpperCase();
+                return s === 'EM_ANDAMENTO' || s === 'ATIVO' || s === 'MANUTENCAO';
+              });
+              setHasActiveMaintenance(activeM);
+            }
+          }
+        } catch (err) {
+          console.error('Erro ao checar manutenções do veículo', err);
+          setHasActiveMaintenance(false);
+        }
+      })();
     } else {
       setFormData({
         tipoVeiculo: "CARRO",
@@ -79,6 +125,14 @@ export function VehicleFormModal({
     
     if (loading) return;
 
+    // Prevent changing status while the vehicle has active rental/maintenance
+    if (editingVehicle) {
+      const originalStatus = (editingVehicle.status || '').toString();
+      if ((hasActiveRental || hasActiveMaintenance) && formData.status !== originalStatus) {
+        toast.error('Não é possível alterar o status do veículo enquanto houver aluguel ou manutenção em andamento. Finalize-os antes.');
+        return;
+      }
+    }
     const prepared = {
       ...formData,      
       preco: formData.preco === "" ? 0 : (parseInt(formData.preco as any, 10) || 0) / 100,
@@ -112,7 +166,7 @@ export function VehicleFormModal({
   };
 
   return (
-    <Dialog open={open} onOpenChange={(open) => {
+    <Dialog open={open} onOpenChange={(open: boolean) => {
       if (!loading) {
         onOpenChange(open);
       }
@@ -268,21 +322,25 @@ export function VehicleFormModal({
             <div className="grid gap-2">
               <Label htmlFor="status">Status</Label>
               <Select
-                value={formData.status}
-                onValueChange={(value: string) =>
-                  setFormData({ ...formData, status: value })
-                }
-              >
+                  value={formData.status}
+                  onValueChange={(value: string) =>
+                    setFormData({ ...formData, status: value })
+                  }
+                  disabled={!!editingVehicle && (hasActiveRental || hasActiveMaintenance)}
+                >
                 <SelectTrigger id="status">
                   <SelectValue placeholder="Selecione o status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="DISPONÍVEL">Disponível</SelectItem>
-                  <SelectItem value="ALUGADO">Alugado</SelectItem>
-                  <SelectItem value="MANUTENÇÃO">Manutenção</SelectItem>
-                  <SelectItem value="INDISPONÍVEL">Indisponível</SelectItem>
+                    <SelectItem value="DISPONÍVEL">Disponível</SelectItem>
+                    <SelectItem value="ALUGADO">Alugado</SelectItem>
+                    <SelectItem value="MANUTENÇÃO">Manutenção</SelectItem>
+                    <SelectItem value="INDISPONÍVEL">Indisponível</SelectItem>
                 </SelectContent>
               </Select>
+                {(hasActiveRental || hasActiveMaintenance) && (
+                  <p className="text-sm text-destructive mt-2">Existe{hasActiveRental && ' um aluguel em andamento'}{hasActiveRental && hasActiveMaintenance && ' e'}{hasActiveMaintenance && ' uma manutenção em andamento'}. Não é possível alterar o status até que sejam finalizados.</p>
+                )}
             </div>
           </div>
           <DialogFooter className="pt-4 mt-auto bg-background">
@@ -294,7 +352,7 @@ export function VehicleFormModal({
             >
               Cancelar
             </Button>
-            <Button type="submit" disabled={loading}>
+            <Button type="submit" disabled={loading || (editingVehicle && (hasActiveRental || hasActiveMaintenance) && formData.status !== (editingVehicle.status || ''))}>
               {loading ? "Salvando..." : editingVehicle ? "Atualizar" : "Cadastrar"}
             </Button>
           </DialogFooter>
