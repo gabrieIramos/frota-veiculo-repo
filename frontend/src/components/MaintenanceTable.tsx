@@ -41,8 +41,18 @@ export function MaintenanceTable({ maintenances, onEdit, onDelete, onFinalize }:
   };
 
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('pt-BR');
+    if (!dateString) return "-";
+    try {
+      if (/T/.test(dateString)) {
+        const d = new Date(dateString);
+        if (!isNaN(d.getTime())) return d.toLocaleDateString('pt-BR');
+      } else if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+        const [y, m, d] = dateString.split('-').map(Number);
+        const dd = new Date(y, (m || 1) - 1, d || 1);
+        if (!isNaN(dd.getTime())) return dd.toLocaleDateString('pt-BR');
+      }
+    } catch {}
+    return dateString;
   };
 
   return (
