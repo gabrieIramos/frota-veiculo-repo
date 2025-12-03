@@ -59,7 +59,7 @@ export function VehicleFilters({
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
       <div className="flex items-center gap-2">
-        <CollapsibleTrigger asChild>
+        {/* <CollapsibleTrigger asChild>
           <Button variant="outline" className="gap-2">
             <Filter className="h-4 w-4" />
             Filtros Avançados
@@ -69,7 +69,7 @@ export function VehicleFilters({
               </span>
             )}
           </Button>
-        </CollapsibleTrigger>
+        </CollapsibleTrigger> */}
         {hasActiveFilters && (
           <Button
             variant="ghost"
